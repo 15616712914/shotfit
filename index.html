@@ -5,8 +5,26 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Shotfit — App Store screenshots &amp; app icons</title>
-<meta name="description" content="iPhone screenshots → 1320×2868, and app icons for every size. Runs in your browser.">
+<meta name="description" content="Free App Store screenshot resizer, phone-frame mockups and app icon set. 1320×2868 and every size, in your browser — nothing is uploaded.">
+<link rel="canonical" href="https://15616712914.github.io/shotfit/">
+<meta name="theme-color" content="#0e0e10">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Shotfit">
+<meta property="og:title" content="Shotfit — App Store screenshots &amp; app icons">
+<meta property="og:description" content="Resize screenshots to App Store sizes, add phone frames and export a full .appiconset. Runs in your browser.">
+<meta property="og:url" content="https://15616712914.github.io/shotfit/">
+<meta property="og:image" content="https://15616712914.github.io/shotfit/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%230e0e10'/%3E%3Crect x='30' y='22' width='40' height='56' rx='8' fill='none' stroke='%23a855f7' stroke-width='6'/%3E%3C/svg%3E">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"Shotfit",
+ "url":"https://15616712914.github.io/shotfit/",
+ "applicationCategory":"DeveloperApplication","operatingSystem":"Any",
+ "description":"Convert iPhone screenshots to App Store sizes, add phone frames, and export a complete .appiconset. Runs entirely in the browser.",
+ "offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
+</script>
 <style>
   :root{
     --bg:#0e0e10; --panel:#16161a; --panel2:#1c1c21; --line:#2a2a31;
@@ -191,11 +209,13 @@ const I18N = {
         frameTitle:"Headline (optional)", frameTitleHint:"Two lines max, resized automatically",
         framePhone:"Phone frame", frameDownload:"Download PNG",
         frameDownloadZip:n=>`Download ${n} screenshots (.zip)`, frameCount:n=>`${n} images · first one shown`,
+        frameCountSizes:(n,k)=>`${n} images × ${k} sizes · preview shows the first`,
         drop:"Drop screenshots", dropSub:"or click to choose · PNG / JPG · multiple OK · App Store sizes",
         noImages:"No readable images in that drop.",
         badFile:n=>`${n}: can't read it (HEIC must be converted first).`,
         badAspect:(n,w,h,tw,th)=>`${n}: ${w}×${h} is not an iPhone aspect — skipped ${tw}×${th}.`,
         aspectErr:(w,h,tw,th)=>`This screenshot is ${w}×${h} and doesn't fit ${tw}×${th}.`,
+        sizeFail:labels=>`Skipped ${labels}: the aspect ratio doesn't match.`,
         iconDrop:"Drop one square-ish image", iconDropSub:"or click to choose · 1024×1024 recommended · PNG / JPG",
         iconReady:"Icon is ready", iconHint:"Square crop, opaque. iOS adds the rounded corners.",
         iconDownload1024:"Download 1024 PNG", iconDownloadSet:"Download .appiconset (.zip)",
@@ -206,11 +226,13 @@ const I18N = {
         frameTitle:"标题（可选）", frameTitleHint:"最多两行，字号自动调整",
         framePhone:"显示手机边框", frameDownload:"下载 PNG",
         frameDownloadZip:n=>`下载 ${n} 张（zip）`, frameCount:n=>`共 ${n} 张 · 预览显示第一张`,
+        frameCountSizes:(n,k)=>`共 ${n} 张 × ${k} 个尺寸 · 预览显示第一张`,
         drop:"把截图拖到这里", dropSub:"或点击选择 · PNG / JPG · 可多选 · App Store 尺寸",
         noImages:"没有可读取的图片。",
         badFile:n=>`${n}：无法读取（HEIC 请先转成 PNG/JPG）。`,
         badAspect:(n,w,h,tw,th)=>`${n}：${w}×${h} 不是 iPhone 比例，已跳过 ${tw}×${th}。`,
         aspectErr:(w,h,tw,th)=>`这张是 ${w}×${h}，和目标 ${tw}×${th} 比例差太多。`,
+        sizeFail:labels=>`已跳过 ${labels}：比例对不上。`,
         iconDrop:"把一张图片拖到这里", iconDropSub:"或点击选择 · 建议 1024×1024 · PNG / JPG",
         iconReady:"图标已生成", iconHint:"居中方形裁切、无透明。圆角由 iOS 自动加。",
         iconDownload1024:"下载 1024 PNG", iconDownloadSet:"下载整套 .appiconset（zip）",
@@ -221,11 +243,13 @@ const I18N = {
         frameTitle:"見出し（任意）", frameTitleHint:"2 行まで、自動で縮小",
         framePhone:"端末フレームを表示", frameDownload:"PNG をダウンロード",
         frameDownloadZip:n=>`${n} 枚をダウンロード（zip）`, frameCount:n=>`${n} 枚 · プレビューは 1 枚目`,
+        frameCountSizes:(n,k)=>`${n} 枚 × ${k} サイズ · プレビューは 1 枚目`,
         drop:"スクリーンショットをドロップ", dropSub:"またはクリックして選択 · PNG / JPG · 複数可 · App Store サイズ",
         noImages:"読み込める画像がありません。",
         badFile:n=>`${n}：読み込めません（HEIC は事前に変換してください）。`,
         badAspect:(n,w,h,tw,th)=>`${n}：${w}×${h} は iPhone の比率ではないため ${tw}×${th} をスキップ。`,
         aspectErr:(w,h,tw,th)=>`この画像は ${w}×${h} で、${tw}×${th} とは比率が違いすぎます。`,
+        sizeFail:labels=>`${labels} は比率が合わずスキップしました。`,
         iconDrop:"正方形に近い画像を 1 枚ドロップ", iconDropSub:"またはクリックして選択 · 1024×1024 推奨 · PNG / JPG",
         iconReady:"アイコンを生成しました", iconHint:"中央で正方形に切り抜き、透過なし。角丸は iOS が付けます。",
         iconDownload1024:"1024 PNG をダウンロード", iconDownloadSet:".appiconset 一式（zip）をダウンロード",
@@ -236,11 +260,13 @@ const I18N = {
         frameTitle:"제목 (선택)", frameTitleHint:"최대 2줄, 자동 축소",
         framePhone:"기기 프레임 표시", frameDownload:"PNG 다운로드",
         frameDownloadZip:n=>`${n}장 다운로드 (zip)`, frameCount:n=>`${n}장 · 미리보기는 첫 장`,
+        frameCountSizes:(n,k)=>`${n}장 × ${k}개 크기 · 미리보기는 첫 장`,
         drop:"스크린샷을 놓으세요", dropSub:"또는 클릭해서 선택 · PNG / JPG · 여러 장 가능 · 앱스토어 크기",
         noImages:"읽을 수 있는 이미지가 없습니다.",
         badFile:n=>`${n}: 읽을 수 없습니다 (HEIC는 먼저 변환하세요).`,
         badAspect:(n,w,h,tw,th)=>`${n}: ${w}×${h} 은 아이폰 비율이 아니어서 ${tw}×${th} 를 건너뜁니다.`,
         aspectErr:(w,h,tw,th)=>`이 이미지는 ${w}×${h} 로 ${tw}×${th} 비율과 너무 다릅니다.`,
+        sizeFail:labels=>`${labels} 는 비율이 맞지 않아 건너뜁니다.`,
         iconDrop:"정사각형에 가까운 이미지 1장을 놓으세요", iconDropSub:"또는 클릭해서 선택 · 1024×1024 권장 · PNG / JPG",
         iconReady:"아이콘이 준비되었습니다", iconHint:"가운데 정사각형 크롭, 투명 없음. 둥근 모서리는 iOS가 추가합니다.",
         iconDownload1024:"1024 PNG 다운로드", iconDownloadSet:".appiconset 전체(zip) 다운로드",
@@ -527,7 +553,8 @@ const DEVICES = [
   { id:"61",   label:'iPhone 6.1"', w:1179, h:2556, bezel:24, radius:88, island:true },
   { id:"ipad", label:'iPad 13"',    w:2048, h:2732, bezel:34, radius:46, island:false },
 ];
-let frameDevice = DEVICES[0];
+let frameDevices = [DEVICES[0]];
+const frameDevice = () => frameDevices[0];
 let frameBg = BG_PRESETS[0];
 let frameSources = [];
 
@@ -549,8 +576,10 @@ DEVICES.forEach((d, i) => {
   b.className = "chip" + (i === 0 ? " on" : "");
   b.textContent = d.label;
   b.addEventListener("click", () => {
-    frameDevice = d;
-    document.querySelectorAll("#devices .chip").forEach(x => x.classList.toggle("on", x === b));
+    const on = frameDevices.includes(d);
+    if (on && frameDevices.length === 1) return;   // 最後の 1 つは外せない
+    frameDevices = on ? frameDevices.filter(x => x !== d) : [...frameDevices, d];
+    document.querySelectorAll("#devices .chip").forEach((x, j) => x.classList.toggle("on", frameDevices.includes(DEVICES[j])));
     renderFrame();
   });
   deviceBox.appendChild(b);
@@ -607,20 +636,25 @@ function renderFrame() {
   frameImg.hidden = !c;
   errFrame.textContent = "";
   if (c) frameImg.src = c.toDataURL("image/png");
-  else {
-    const src = frameSources[0];
-    errFrame.textContent = t().aspectErr(src.naturalWidth, src.naturalHeight, frameDevice.w, frameDevice.h);
+
+  // 選んだサイズのうち作れないものがあれば知らせる
+  const skipped = frameDevices.filter(d => !drawFrame(frameSources[0], d)).map(d => d.label);
+  if (skipped.length) {
+    errFrame.textContent = c
+      ? t().sizeFail(skipped.join(", "))
+      : t().aspectErr(frameSources[0].naturalWidth, frameSources[0].naturalHeight, frameDevice().w, frameDevice().h);
   }
   frameDownloadEl.disabled = !c;
 
-  const n = frameSources.length;
-  frameCountEl.textContent = n > 1 ? t().frameCount(n) : "";
-  frameDownloadEl.textContent = n > 1 ? t().frameDownloadZip(n) : t().frameDownload;
+  const n = frameSources.length, k = frameDevices.length;
+  frameCountEl.textContent =
+    k > 1 ? t().frameCountSizes(n, k) : (n > 1 ? t().frameCount(n) : "");
+  frameDownloadEl.textContent = (n * k > 1) ? t().frameDownloadZip(n * k) : t().frameDownload;
 }
 
 /** 選んだ端末の寸法に「見出し + 端末フレーム + スクショ」を描く。 */
-function drawFrame(src) {
-  const FW = frameDevice.w, FH = frameDevice.h;
+function drawFrame(src, dev = frameDevice()) {
+  const FW = dev.w, FH = dev.h;
   if (!shotBgEl.checked) return fitShot(src, [FW, FH]);
   const c = document.createElement("canvas");
   c.width = FW; c.height = FH;
@@ -748,7 +782,7 @@ function drawFrame(src) {
   }
 
   // ダイナミックアイランド
-  if (withPhone && frameDevice.island) {
+  if (withPhone && dev.island) {
     const iw = screenW * 0.27, ih = screenW * 0.078;
     roundRect(ctx, x + (screenW - iw) / 2, y + screenW * 0.021, iw, ih, ih / 2);
     ctx.fillStyle = "#000";
@@ -808,19 +842,29 @@ function saveBlob(blob, name) {
 
 frameDownloadEl.addEventListener("click", async () => {
   if (!frameSources.length) return;
-  const tag = `${frameDevice.w}x${frameDevice.h}`;
-  const canvases = frameSources.map(drawFrame).filter(Boolean);
-  const blobs = await Promise.all(
-    canvases.map(c => new Promise(res => c.toBlob(res, "image/png")))
-  );
-  if (!blobs.length) return;
-  if (blobs.length === 1) { saveBlob(blobs[0], `shot-${tag}.png`); return; }
+
+  const jobs = [];
+  for (const dev of frameDevices) {
+    const tag = `${dev.w}x${dev.h}`;
+    frameSources.forEach((src, i) => {
+      const c = drawFrame(src, dev);
+      if (c) jobs.push({ c, name: `shot-${tag}-${String(i + 1).padStart(2, "0")}.png` });
+    });
+  }
+  if (!jobs.length) return;
+
+  const blobs = await Promise.all(jobs.map(j => new Promise(res => j.c.toBlob(res, "image/png"))));
+
+  if (jobs.length === 1) { saveBlob(blobs[0], jobs[0].name); return; }
 
   const files = await Promise.all(blobs.map(async (b, i) => ({
-    name: `shot-${String(i + 1).padStart(2, "0")}-${tag}.png`,
+    name: jobs[i].name,
     bytes: new Uint8Array(await b.arrayBuffer())
   })));
-  saveBlob(new Blob([makeZip(files)], { type: "application/zip" }), `shots-${tag}.zip`);
+  const zipName = frameDevices.length > 1
+    ? "shots-all-sizes.zip"
+    : `shots-${frameDevices[0].w}x${frameDevices[0].h}.zip`;
+  saveBlob(new Blob([makeZip(files)], { type: "application/zip" }), zipName);
 });
 
 // 動作確認用
