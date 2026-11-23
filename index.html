@@ -19,6 +19,13 @@
     padding:40px 20px;
   }
   .app{max-width:720px;margin:0 auto}
+  .head{display:flex;align-items:flex-start;gap:12px}
+  .head > div{flex:1;min-width:0}
+  #lang{
+    border:1px solid var(--line);background:var(--panel2);color:var(--sub);
+    border-radius:8px;padding:6px 8px;font-size:12.5px;outline:none;
+  }
+  #lang:hover{color:var(--ink)}
   h1{font-size:20px;margin:0 0 4px;letter-spacing:-.2px}
   p.sub{margin:0 0 20px;color:var(--sub);font-size:14px}
   .drop{
@@ -58,12 +65,22 @@
 </head>
 <body>
 <div class="app">
-  <h1>Shotfit</h1>
-  <p class="sub">Any iPhone screenshot → 1320×2868. Nothing is uploaded.</p>
+  <div class="head">
+    <div>
+      <h1>Shotfit</h1>
+      <p class="sub" data-i18n="sub">Any iPhone screenshot → 1320×2868. Nothing is uploaded.</p>
+    </div>
+    <select id="lang" aria-label="Language">
+      <option value="en">English</option>
+      <option value="zh">中文</option>
+      <option value="ja">日本語</option>
+      <option value="ko">한국어</option>
+    </select>
+  </div>
 
   <div class="drop" id="drop">
-    <strong>Drop screenshots here</strong>
-    <span>or click to choose · PNG / JPG · multiple OK</span>
+    <strong data-i18n="drop">Drop screenshots here</strong>
+    <span data-i18n="dropSub">or click to choose · PNG / JPG · multiple OK</span>
     <input type="file" id="picker" accept="image/*" multiple hidden>
   </div>
 
@@ -77,12 +94,79 @@
   <div class="results" id="results"></div>
 
   <div class="actions">
-    <button class="btn main" id="downloadAll" disabled>Download all</button>
-    <button class="btn ghost" id="clearAll" disabled>Clear</button>
+    <button class="btn main" id="downloadAll" disabled data-i18n="downloadAll">Download all</button>
+    <button class="btn ghost" id="clearAll" disabled data-i18n="clear">Clear</button>
   </div>
 </div>
 
 <script>
+const I18N = {
+  en: { sub:"Any iPhone screenshot → 1320×2868. Nothing is uploaded.",
+        drop:"Drop screenshots here", dropSub:"or click to choose · PNG / JPG · multiple OK",
+        downloadAll:"Download all", clear:"Clear", download:"Download",
+        spec:(w,h)=>`${w} × ${h} · PNG · no alpha`,
+        noImages:"No readable images in that drop.",
+        badFile:n=>`${n}: can't read it (HEIC must be converted first).`,
+        badAspect:(n,w,h,tw,th)=>`${n}: ${w}×${h} is not an iPhone aspect — skipped ${tw}×${th}.`,
+        title:"Shotfit — App Store screenshots" },
+  zh: { sub:"任何 iPhone 截图 → 1320×2868，图片不会上传。",
+        drop:"把截图拖到这里", dropSub:"或点击选择 · PNG / JPG · 可多选",
+        downloadAll:"下载全部", clear:"清空", download:"下载",
+        spec:(w,h)=>`${w} × ${h} · PNG · 无透明`,
+        noImages:"没有可读取的图片。",
+        badFile:n=>`${n}：无法读取（HEIC 请先转成 PNG/JPG）。`,
+        badAspect:(n,w,h,tw,th)=>`${n}：${w}×${h} 不是 iPhone 比例，已跳过 ${tw}×${th}。`,
+        title:"Shotfit — App Store 截图转换" },
+  ja: { sub:"iPhone のスクショを 1320×2868 に。画像は送信しません。",
+        drop:"スクリーンショットをドロップ", dropSub:"またはクリックして選択 · PNG / JPG · 複数可",
+        downloadAll:"すべてダウンロード", clear:"クリア", download:"ダウンロード",
+        spec:(w,h)=>`${w} × ${h} · PNG · 透過なし`,
+        noImages:"読み込める画像がありません。",
+        badFile:n=>`${n}：読み込めません（HEIC は事前に変換してください）。`,
+        badAspect:(n,w,h,tw,th)=>`${n}：${w}×${h} は iPhone の比率ではないため ${tw}×${th} をスキップ。`,
+        title:"Shotfit — App Store 用スクリーンショット" },
+  ko: { sub:"아이폰 스크린샷을 1320×2868로. 이미지는 전송되지 않습니다.",
+        drop:"스크린샷을 여기로 끌어다 놓으세요", dropSub:"또는 클릭해서 선택 · PNG / JPG · 여러 장 가능",
+        downloadAll:"모두 다운로드", clear:"지우기", download:"다운로드",
+        spec:(w,h)=>`${w} × ${h} · PNG · 투명 없음`,
+        noImages:"읽을 수 있는 이미지가 없습니다.",
+        badFile:n=>`${n}: 읽을 수 없습니다 (HEIC는 먼저 변환하세요).`,
+        badAspect:(n,w,h,tw,th)=>`${n}: ${w}×${h} 은 아이폰 비율이 아니어서 ${tw}×${th} 를 건너뜁니다.`,
+        title:"Shotfit — App Store 스크린샷" }
+};
+let lang = (() => {
+  const saved = localStorage.getItem("shotfit.lang");
+  if (saved && I18N[saved]) return saved;
+  const n = (navigator.language || "en").toLowerCase();
+  if (n.startsWith("zh")) return "zh";
+  if (n.startsWith("ja")) return "ja";
+  if (n.startsWith("ko")) return "ko";
+  return "en";
+})();
+const t = () => I18N[lang];
+
+function applyLang() {
+  document.documentElement.lang = lang === "zh" ? "zh-CN" : lang;
+  document.title = t().title;
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    const key = el.dataset.i18n;
+    if (t()[key]) el.textContent = t()[key];
+  });
+  document.getElementById("lang").value = lang;
+  // 既存カードの文言も更新
+  document.querySelectorAll(".card").forEach(card => {
+    const [w, h] = (card.dataset.size || "").split("x").map(Number);
+    if (w && h) card.querySelector(".size").textContent = t().spec(w, h);
+    card.querySelector(".row .btn").textContent = t().download;
+  });
+}
+
+document.getElementById("lang").addEventListener("change", e => {
+  lang = e.target.value;
+  localStorage.setItem("shotfit.lang", lang);
+  applyLang();
+});
+
 const SIZES = { "69":[1320,2868], "67":[1290,2796], "65":[1242,2688] };
 const state = { sizes: new Set(["69"]) };
 const results = [];
@@ -142,15 +226,15 @@ function convert(img, [tw, th]) {
 async function handleFiles(files) {
   errBox.textContent = "";
   const images = files.filter(f => /^image\//.test(f.type));
-  if (!images.length) { errBox.textContent = "No readable images in that drop."; return; }
+  if (!images.length) { errBox.textContent = t().noImages; return; }
 
   for (const file of images) {
     const img = await loadImage(file);
-    if (!img) { addError(`${file.name}: can't read it (HEIC must be converted first).`); continue; }
+    if (!img) { addError(t().badFile(file.name)); continue; }
     for (const key of [...state.sizes]) {
       const target = SIZES[key];
       const canvas = convert(img, target);
-      if (!canvas) { addError(`${file.name}: not an iPhone aspect — skipped ${target[0]}×${target[1]}.`); continue; }
+      if (!canvas) { addError(t().badAspect(file.name, img.naturalWidth, img.naturalHeight, target[0], target[1])); continue; }
       const blob = await new Promise(r => canvas.toBlob(r, "image/png"));
       addResult(`${file.name.replace(/\.[^.]+$/, "")}-${target[0]}x${target[1]}.png`, blob, target);
     }
@@ -175,14 +259,15 @@ function addResult(name, blob, [tw, th]) {
   const url = URL.createObjectURL(blob);
   const card = document.createElement("div");
   card.className = "card";
+  card.dataset.size = `${tw}x${th}`;
   card.innerHTML = `
     <img src="${url}" alt="">
     <div class="meta">
       <div class="name">${name}</div>
-      <div class="size">${tw} × ${th} · PNG · no alpha</div>
+      <div class="size">${t().spec(tw, th)}</div>
     </div>
     <div class="row">
-      <a class="btn" href="${url}" download="${name}">Download</a>
+      <a class="btn" href="${url}" download="${name}">${t().download}</a>
       <button class="btn ghost" title="Remove">✕</button>
     </div>`;
   card.querySelector(".row .ghost").addEventListener("click", () => {
@@ -201,6 +286,8 @@ function sync() {
   downloadAllBtn.disabled = results.length === 0;
   clearAllBtn.disabled = results.length === 0;
 }
+
+applyLang();
 
 downloadAllBtn.addEventListener("click", () => {
   results.forEach((r, i) => setTimeout(() => {
