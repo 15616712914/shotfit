@@ -760,8 +760,7 @@ function renderFrame() {
   const y = top + (availH - screenH) / 2;
 
   if (withPhone) {
-    const sideW = Math.max(3, Math.round(screenW * 0.008));
-    const metal = "#111113";
+    const metal = "#2f2f36";
 
     // 側面ボタン（フレームの外に少し出る）
     const btn = (bx, by, bh, bw) => {
@@ -770,8 +769,15 @@ function renderFrame() {
       ctx.fill();
     };
     const h = screenH;
-    const rightX = x + screenW + bezel - sideW * 1.1;
-    btn(rightX, y + h * 0.24, h * 0.09, sideW * 1.2);          // 電源
+    const sideW = Math.max(3, Math.round(screenW * 0.009));
+
+    // 右：電源
+    btn(x + screenW + bezel - sideW * 1.0, y + h * 0.23, h * 0.095, sideW * 1.4);
+    // 左：消音 + 音量×2
+    const leftX = x - bezel - sideW * 0.4;
+    btn(leftX, y + h * 0.155, h * 0.045, sideW * 1.4);
+    btn(leftX, y + h * 0.235, h * 0.075, sideW * 1.4);
+    btn(leftX, y + h * 0.330, h * 0.075, sideW * 1.4);
 
     // 筐体
     roundRect(ctx, x - bezel, y - bezel, screenW + bezel * 2, screenH + bezel * 2, outerR);
@@ -779,9 +785,10 @@ function renderFrame() {
     ctx.shadowBlur = 70;
     ctx.shadowOffsetY = 30;
     const shell = ctx.createLinearGradient(x - bezel, y, x + screenW + bezel, y + screenH);
-    shell.addColorStop(0, "#1b1b1e");
-    shell.addColorStop(0.45, "#09090b");
-    shell.addColorStop(1, "#141416");
+    shell.addColorStop(0, "#2b2b31");
+    shell.addColorStop(0.35, "#111114");
+    shell.addColorStop(0.75, "#07070a");
+    shell.addColorStop(1, "#1f1f24");
     ctx.fillStyle = shell;
     ctx.fill();
     ctx.shadowColor = "transparent";
@@ -791,7 +798,7 @@ function renderFrame() {
     // 縁のハイライト
     ctx.save();
     roundRect(ctx, x - bezel + 1.5, y - bezel + 1.5, screenW + bezel * 2 - 3, screenH + bezel * 2 - 3, outerR - 1.5);
-    ctx.strokeStyle = "rgba(255,255,255,0.10)";
+    ctx.strokeStyle = "rgba(255,255,255,0.14)";
     ctx.lineWidth = 2;
     ctx.stroke();
     ctx.restore();
@@ -822,7 +829,7 @@ function renderFrame() {
 
   if (!withPhone) {
     roundRect(ctx, x + 1, y + 1, screenW - 2, screenH - 2, innerR - 1);
-    ctx.strokeStyle = "rgba(255,255,255,0.10)";
+    ctx.strokeStyle = "rgba(255,255,255,0.14)";
     ctx.lineWidth = 2;
     ctx.stroke();
   }
