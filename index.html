@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<!-- iPhone のスクショを App Store の寸法に変換する（ブラウザ内で完結） -->
+<!-- iPhone のスクショを App Store 寸法に変換 / アプリアイコン一式を生成（ブラウザ内で完結） -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Shotfit — App Store screenshots</title>
-<meta name="description" content="Any iPhone screenshot → 1320×2868. Runs in your browser.">
+<title>Shotfit — App Store screenshots &amp; app icons</title>
+<meta name="description" content="iPhone screenshots → 1320×2868, and app icons for every size. Runs in your browser.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%230e0e10'/%3E%3Crect x='30' y='22' width='40' height='56' rx='8' fill='none' stroke='%23a855f7' stroke-width='6'/%3E%3C/svg%3E">
 <style>
   :root{
@@ -21,15 +21,22 @@
   .app{max-width:720px;margin:0 auto}
   .head{display:flex;align-items:flex-start;gap:12px}
   .head > div{flex:1;min-width:0}
+  h1{font-size:20px;margin:0 0 4px;letter-spacing:-.2px}
+  p.sub{margin:0 0 18px;color:var(--sub);font-size:14px}
   #lang{
     border:1px solid var(--line);background:var(--panel2);color:var(--sub);
     border-radius:8px;padding:6px 8px;font-size:12.5px;outline:none;
   }
   #lang:hover{color:var(--ink)}
-  h1{font-size:20px;margin:0 0 4px;letter-spacing:-.2px}
-  p.sub{margin:0 0 20px;color:var(--sub);font-size:14px}
+  .tabs{display:flex;gap:6px;margin:0 0 16px}
+  .tab{
+    border:1px solid var(--line);background:var(--panel2);color:var(--sub);
+    padding:7px 14px;border-radius:10px;font-size:13px;cursor:pointer;
+  }
+  .tab.on{color:var(--ink);border-color:var(--brand);background:#241636}
+  .panel[hidden]{display:none}
   .drop{
-    border:2px dashed var(--line);border-radius:16px;padding:36px 16px;text-align:center;
+    border:2px dashed var(--line);border-radius:16px;padding:34px 16px;text-align:center;
     background:var(--panel);cursor:pointer;transition:.15s;
   }
   .drop.hot{border-color:var(--brand);background:#1d1428}
@@ -55,12 +62,39 @@
   .btn{
     border:1px solid var(--line);background:transparent;color:var(--ink);
     padding:7px 13px;border-radius:9px;font-size:12.5px;cursor:pointer;text-decoration:none;
+    white-space:nowrap;
   }
   .btn:hover{border-color:var(--brand)}
   .btn.main{background:var(--brand);border-color:transparent;color:#fff}
   .btn.ghost{color:var(--sub)}
   .btn:disabled{opacity:.4;cursor:default}
-  .actions{display:flex;gap:8px;margin-top:14px}
+  .actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+
+  /* アイコン用 */
+  .iconview{display:flex;align-items:center;gap:16px;margin-top:16px}
+  .iconview img{
+    width:120px;height:120px;border-radius:27px;background:#fff;display:block;
+    box-shadow:0 12px 30px -12px rgba(0,0,0,.8);
+  }
+  .iconmeta{font-size:12.5px;color:var(--sub)}
+  .iconmeta b{display:block;color:var(--ink);font-size:14px;margin-bottom:4px}
+
+  /* フレーム */
+  .framePreview{margin-top:14px;border-radius:12px;overflow:hidden;background:#000;border:1px solid var(--line)}
+  .framePreview img{display:block;width:100%;height:auto}
+  .swatches{display:flex;gap:8px;margin:12px 0;flex-wrap:wrap}
+  .swatch{width:34px;height:34px;border-radius:9px;border:2px solid transparent;cursor:pointer}
+  .swatch.on{border-color:var(--brand)}
+  .field{display:block;margin:10px 0}
+  .field span{display:block;font-size:12.5px;color:var(--sub);margin-bottom:5px}
+  .field input{
+    width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--ink);
+    border-radius:9px;padding:9px 11px;font-size:14px;outline:none;
+  }
+  .field input:focus{border-color:var(--brand)}
+  .field em{display:block;font-size:11.5px;color:var(--sub);font-style:normal;margin-top:4px}
+  .checkline{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--sub);margin:12px 0}
+  .checkline input{accent-color:var(--brand)}
 </style>
 </head>
 <body>
@@ -68,7 +102,7 @@
   <div class="head">
     <div>
       <h1>Shotfit</h1>
-      <p class="sub" data-i18n="sub">Any iPhone screenshot → 1320×2868. Nothing is uploaded.</p>
+      <p class="sub" data-i18n="sub">App Store screenshots and app icons. Nothing is uploaded.</p>
     </div>
     <select id="lang" aria-label="Language">
       <option value="en">English</option>
@@ -78,62 +112,155 @@
     </select>
   </div>
 
-  <div class="drop" id="drop">
-    <strong data-i18n="drop">Drop screenshots here</strong>
-    <span data-i18n="dropSub">or click to choose · PNG / JPG · multiple OK</span>
-    <input type="file" id="picker" accept="image/*" multiple hidden>
+  <div class="tabs">
+    <button class="tab on" data-tab="shot" data-i18n="tabShot">Screenshots</button>
+    <button class="tab" data-tab="icon" data-i18n="tabIcon">App icon</button>
+    <button class="tab" data-tab="frame" data-i18n="tabFrame">Frame</button>
   </div>
 
-  <div class="opts">
-    <button class="chip on" data-size="69">6.9" · 1320×2868</button>
-    <button class="chip" data-size="67">6.7" · 1290×2796</button>
-    <button class="chip" data-size="65">6.5" · 1242×2688</button>
-  </div>
+  <!-- スクリーンショット -->
+  <section class="panel" id="panel-shot">
+    <div class="drop" id="drop-shot">
+      <strong data-i18n="drop">Drop screenshots here</strong>
+      <span data-i18n="dropSub">or click to choose · PNG / JPG · multiple OK</span>
+      <input type="file" id="pick-shot" accept="image/*" multiple hidden>
+    </div>
 
-  <div class="err" id="err"></div>
-  <div class="results" id="results"></div>
+    <div class="opts">
+      <button class="chip on" data-size="69">6.9" · 1320×2868</button>
+      <button class="chip" data-size="67">6.7" · 1290×2796</button>
+      <button class="chip" data-size="65">6.5" · 1242×2688</button>
+    </div>
 
-  <div class="actions">
-    <button class="btn main" id="downloadAll" disabled data-i18n="downloadAll">Download all</button>
-    <button class="btn ghost" id="clearAll" disabled data-i18n="clear">Clear</button>
-  </div>
+    <div class="err" id="err-shot"></div>
+    <div class="results" id="results-shot"></div>
+
+    <div class="actions">
+      <button class="btn main" id="downloadAll" disabled data-i18n="downloadAll">Download all</button>
+      <button class="btn ghost" id="clearAll" disabled data-i18n="clear">Clear</button>
+    </div>
+  </section>
+
+  <!-- アイコン -->
+  <section class="panel" id="panel-icon" hidden>
+    <div class="drop" id="drop-icon">
+      <strong data-i18n="iconDrop">Drop one square-ish image</strong>
+      <span data-i18n="iconDropSub">or click to choose · 1024×1024 recommended · PNG / JPG</span>
+      <input type="file" id="pick-icon" accept="image/*" hidden>
+    </div>
+    <div class="err" id="err-icon"></div>
+
+    <div class="iconview" id="iconview" hidden>
+      <img id="iconPreview" alt="">
+      <div class="iconmeta">
+        <b data-i18n="iconReady">Icon is ready</b>
+        <span data-i18n="iconHint">Square crop, opaque, rounded corners are added by iOS.</span>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn main" id="iconOne" disabled data-i18n="iconDownload1024">Download 1024 PNG</button>
+      <button class="btn" id="iconZip" disabled data-i18n="iconDownloadSet">Download .appiconset (.zip)</button>
+    </div>
+  </section>
+
+  <!-- フレーム -->
+  <section class="panel" id="panel-frame" hidden>
+    <div class="drop" id="drop-frame">
+      <strong data-i18n="frameDrop">Drop a screenshot</strong>
+      <span data-i18n="frameDropSub">or click to choose · it gets a phone frame and a headline</span>
+      <input type="file" id="pick-frame" accept="image/*" hidden>
+    </div>
+    <div class="err" id="err-frame"></div>
+
+    <div id="frameBody" hidden>
+      <div class="framePreview"><img id="frameImg" alt=""></div>
+
+      <div class="swatches" id="swatches"></div>
+
+      <label class="field">
+        <span data-i18n="frameTitle">Headline (optional)</span>
+        <input id="frameTitle" type="text" maxlength="60" placeholder="Track your habits">
+        <em data-i18n="frameTitleHint">Two lines max, resized automatically</em>
+      </label>
+
+      <label class="checkline">
+        <input type="checkbox" id="framePhone" checked>
+        <span data-i18n="framePhone">Phone frame</span>
+      </label>
+
+      <div class="actions">
+        <button class="btn main" id="frameDownload" data-i18n="frameDownload">Download 1320×2868</button>
+      </div>
+    </div>
+  </section>
 </div>
 
 <script>
+/* ---------- 言語 ---------- */
 const I18N = {
-  en: { sub:"Any iPhone screenshot → 1320×2868. Nothing is uploaded.",
+  en: { sub:"App Store screenshots and app icons. Nothing is uploaded.",
+        tabShot:"Screenshots", tabIcon:"App icon", tabFrame:"Frame",
+        frameDrop:"Drop a screenshot", frameDropSub:"or click to choose · it gets a phone frame and a headline",
+        frameTitle:"Headline (optional)", frameTitleHint:"Two lines max, resized automatically",
+        framePhone:"Phone frame", frameDownload:"Download 1320×2868",
         drop:"Drop screenshots here", dropSub:"or click to choose · PNG / JPG · multiple OK",
         downloadAll:"Download all", clear:"Clear", download:"Download",
         spec:(w,h)=>`${w} × ${h} · PNG · no alpha`,
         noImages:"No readable images in that drop.",
         badFile:n=>`${n}: can't read it (HEIC must be converted first).`,
         badAspect:(n,w,h,tw,th)=>`${n}: ${w}×${h} is not an iPhone aspect — skipped ${tw}×${th}.`,
-        title:"Shotfit — App Store screenshots" },
-  zh: { sub:"任何 iPhone 截图 → 1320×2868，图片不会上传。",
+        iconDrop:"Drop one square-ish image", iconDropSub:"or click to choose · 1024×1024 recommended · PNG / JPG",
+        iconReady:"Icon is ready", iconHint:"Square crop, opaque. iOS adds the rounded corners.",
+        iconDownload1024:"Download 1024 PNG", iconDownloadSet:"Download .appiconset (.zip)",
+        title:"Shotfit — App Store screenshots & app icons" },
+  zh: { sub:"App Store 截图转换 + App 图标生成，图片不会上传。",
+        tabShot:"截图", tabIcon:"App 图标", tabFrame:"加外壳",
+        frameDrop:"把截图拖到这里", frameDropSub:"或点击选择 · 会自动套上手机边框和标题",
+        frameTitle:"标题（可选）", frameTitleHint:"最多两行，字号自动调整",
+        framePhone:"显示手机边框", frameDownload:"下载 1320×2868",
         drop:"把截图拖到这里", dropSub:"或点击选择 · PNG / JPG · 可多选",
         downloadAll:"下载全部", clear:"清空", download:"下载",
         spec:(w,h)=>`${w} × ${h} · PNG · 无透明`,
         noImages:"没有可读取的图片。",
         badFile:n=>`${n}：无法读取（HEIC 请先转成 PNG/JPG）。`,
         badAspect:(n,w,h,tw,th)=>`${n}：${w}×${h} 不是 iPhone 比例，已跳过 ${tw}×${th}。`,
-        title:"Shotfit — App Store 截图转换" },
-  ja: { sub:"iPhone のスクショを 1320×2868 に。画像は送信しません。",
+        iconDrop:"把一张图片拖到这里", iconDropSub:"或点击选择 · 建议 1024×1024 · PNG / JPG",
+        iconReady:"图标已生成", iconHint:"居中方形裁切、无透明。圆角由 iOS 自动加。",
+        iconDownload1024:"下载 1024 PNG", iconDownloadSet:"下载整套 .appiconset（zip）",
+        title:"Shotfit — App Store 截图与图标" },
+  ja: { sub:"App Store 用スクショ変換とアプリアイコン生成。画像は送信しません。",
+        tabShot:"スクショ", tabIcon:"アイコン", tabFrame:"フレーム",
+        frameDrop:"スクショをドロップ", frameDropSub:"またはクリックして選択 · 端末フレームと見出しを付けます",
+        frameTitle:"見出し（任意）", frameTitleHint:"2 行まで、自動で縮小",
+        framePhone:"端末フレームを表示", frameDownload:"1320×2868 をダウンロード",
         drop:"スクリーンショットをドロップ", dropSub:"またはクリックして選択 · PNG / JPG · 複数可",
         downloadAll:"すべてダウンロード", clear:"クリア", download:"ダウンロード",
         spec:(w,h)=>`${w} × ${h} · PNG · 透過なし`,
         noImages:"読み込める画像がありません。",
         badFile:n=>`${n}：読み込めません（HEIC は事前に変換してください）。`,
         badAspect:(n,w,h,tw,th)=>`${n}：${w}×${h} は iPhone の比率ではないため ${tw}×${th} をスキップ。`,
-        title:"Shotfit — App Store 用スクリーンショット" },
-  ko: { sub:"아이폰 스크린샷을 1320×2868로. 이미지는 전송되지 않습니다.",
+        iconDrop:"正方形に近い画像を 1 枚ドロップ", iconDropSub:"またはクリックして選択 · 1024×1024 推奨 · PNG / JPG",
+        iconReady:"アイコンを生成しました", iconHint:"中央で正方形に切り抜き、透過なし。角丸は iOS が付けます。",
+        iconDownload1024:"1024 PNG をダウンロード", iconDownloadSet:".appiconset 一式（zip）をダウンロード",
+        title:"Shotfit — App Store 用スクショとアイコン" },
+  ko: { sub:"앱스토어 스크린샷 변환과 앱 아이콘 생성. 이미지는 전송되지 않습니다.",
+        tabShot:"스크린샷", tabIcon:"앱 아이콘", tabFrame:"프레임",
+        frameDrop:"스크린샷을 놓으세요", frameDropSub:"또는 클릭해서 선택 · 기기 프레임과 제목을 입힙니다",
+        frameTitle:"제목 (선택)", frameTitleHint:"최대 2줄, 자동 축소",
+        framePhone:"기기 프레임 표시", frameDownload:"1320×2868 다운로드",
         drop:"스크린샷을 여기로 끌어다 놓으세요", dropSub:"또는 클릭해서 선택 · PNG / JPG · 여러 장 가능",
         downloadAll:"모두 다운로드", clear:"지우기", download:"다운로드",
         spec:(w,h)=>`${w} × ${h} · PNG · 투명 없음`,
         noImages:"읽을 수 있는 이미지가 없습니다.",
         badFile:n=>`${n}: 읽을 수 없습니다 (HEIC는 먼저 변환하세요).`,
         badAspect:(n,w,h,tw,th)=>`${n}: ${w}×${h} 은 아이폰 비율이 아니어서 ${tw}×${th} 를 건너뜁니다.`,
-        title:"Shotfit — App Store 스크린샷" }
+        iconDrop:"정사각형에 가까운 이미지 1장을 놓으세요", iconDropSub:"또는 클릭해서 선택 · 1024×1024 권장 · PNG / JPG",
+        iconReady:"아이콘이 준비되었습니다", iconHint:"가운데 정사각형 크롭, 투명 없음. 둥근 모서리는 iOS가 추가합니다.",
+        iconDownload1024:"1024 PNG 다운로드", iconDownloadSet:".appiconset 전체(zip) 다운로드",
+        title:"Shotfit — 앱스토어 스크린샷과 아이콘" }
 };
+
 let lang = (() => {
   const saved = localStorage.getItem("shotfit.lang");
   if (saved && I18N[saved]) return saved;
@@ -149,11 +276,10 @@ function applyLang() {
   document.documentElement.lang = lang === "zh" ? "zh-CN" : lang;
   document.title = t().title;
   document.querySelectorAll("[data-i18n]").forEach(el => {
-    const key = el.dataset.i18n;
-    if (t()[key]) el.textContent = t()[key];
+    const v = t()[el.dataset.i18n];
+    if (v) el.textContent = v;
   });
   document.getElementById("lang").value = lang;
-  // 既存カードの文言も更新
   document.querySelectorAll(".card").forEach(card => {
     const [w, h] = (card.dataset.size || "").split("x").map(Number);
     if (w && h) card.querySelector(".size").textContent = t().spec(w, h);
@@ -167,14 +293,25 @@ document.getElementById("lang").addEventListener("change", e => {
   applyLang();
 });
 
+/* ---------- タブ ---------- */
+document.querySelectorAll(".tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(x => x.classList.toggle("on", x === tab));
+    document.getElementById("panel-shot").hidden = tab.dataset.tab !== "shot";
+    document.getElementById("panel-icon").hidden = tab.dataset.tab !== "icon";
+    document.getElementById("panel-frame").hidden = tab.dataset.tab !== "frame";
+  });
+});
+
+/* ---------- スクリーンショット ---------- */
 const SIZES = { "69":[1320,2868], "67":[1290,2796], "65":[1242,2688] };
 const state = { sizes: new Set(["69"]) };
 const results = [];
 
-const drop = document.getElementById("drop");
-const picker = document.getElementById("picker");
-const resultsBox = document.getElementById("results");
-const errBox = document.getElementById("err");
+const dropShot = document.getElementById("drop-shot");
+const pickShot = document.getElementById("pick-shot");
+const resultsBox = document.getElementById("results-shot");
+const errShot = document.getElementById("err-shot");
 const downloadAllBtn = document.getElementById("downloadAll");
 const clearAllBtn = document.getElementById("clearAll");
 
@@ -190,14 +327,14 @@ document.querySelectorAll("[data-size]").forEach(btn => {
   });
 });
 
-drop.addEventListener("click", () => picker.click());
-picker.addEventListener("change", () => handleFiles([...picker.files]));
-["dragenter","dragover"].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add("hot"); }));
-["dragleave","drop"].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.remove("hot"); }));
-drop.addEventListener("drop", e => handleFiles([...e.dataTransfer.files]));
+dropShot.addEventListener("click", () => pickShot.click());
+pickShot.addEventListener("change", () => handleShots([...pickShot.files]));
+["dragenter","dragover"].forEach(t => dropShot.addEventListener(t, e => { e.preventDefault(); dropShot.classList.add("hot"); }));
+["dragleave","drop"].forEach(t => dropShot.addEventListener(t, e => { e.preventDefault(); dropShot.classList.remove("hot"); }));
+dropShot.addEventListener("drop", e => handleShots([...e.dataTransfer.files]));
 
 /** 縦横比を保ったまま目標寸法へ。余りは端の色で埋める。 */
-function convert(img, [tw, th]) {
+function fitShot(img, [tw, th]) {
   const w = img.naturalWidth, h = img.naturalHeight;
   if (Math.abs((w / h) - (tw / th)) / (tw / th) > 0.10) return null;
 
@@ -211,32 +348,36 @@ function convert(img, [tw, th]) {
     ctx.drawImage(img, (w - sw) / 2, 0, sw, h, 0, 0, tw, th);
   } else {
     const scale = tw / w, sh = th / scale;
-    const c = document.createElement("canvas");
-    c.width = c.height = 1;
-    const x = c.getContext("2d");
-    x.drawImage(img, 0, 0, 1, 1, 0, 0, 1, 1);
-    const d = x.getImageData(0, 0, 1, 1).data;
-    ctx.fillStyle = `rgb(${d[0]},${d[1]},${d[2]})`;
+    ctx.fillStyle = edgeColor(img);
     ctx.fillRect(0, 0, tw, th);
     ctx.drawImage(img, 0, (h - sh) / 2, w, sh, 0, 0, tw, th);
   }
   return canvas;
 }
 
-async function handleFiles(files) {
-  errBox.textContent = "";
+function edgeColor(img) {
+  const c = document.createElement("canvas");
+  c.width = c.height = 1;
+  const x = c.getContext("2d");
+  x.drawImage(img, 0, 0, 1, 1, 0, 0, 1, 1);
+  const d = x.getImageData(0, 0, 1, 1).data;
+  return `rgb(${d[0]},${d[1]},${d[2]})`;
+}
+
+async function handleShots(files) {
+  errShot.textContent = "";
   const images = files.filter(f => /^image\//.test(f.type));
-  if (!images.length) { errBox.textContent = t().noImages; return; }
+  if (!images.length) { errShot.textContent = t().noImages; return; }
 
   for (const file of images) {
     const img = await loadImage(file);
-    if (!img) { addError(t().badFile(file.name)); continue; }
+    if (!img) { addErr(errShot, t().badFile(file.name)); continue; }
     for (const key of [...state.sizes]) {
       const target = SIZES[key];
-      const canvas = convert(img, target);
-      if (!canvas) { addError(t().badAspect(file.name, img.naturalWidth, img.naturalHeight, target[0], target[1])); continue; }
+      const canvas = fitShot(img, target);
+      if (!canvas) { addErr(errShot, t().badAspect(file.name, img.naturalWidth, img.naturalHeight, target[0], target[1])); continue; }
       const blob = await new Promise(r => canvas.toBlob(r, "image/png"));
-      addResult(`${file.name.replace(/\.[^.]+$/, "")}-${target[0]}x${target[1]}.png`, blob, target);
+      addShotResult(`${file.name.replace(/\.[^.]+$/, "")}-${target[0]}x${target[1]}.png`, blob, target);
     }
   }
 }
@@ -251,11 +392,11 @@ function loadImage(file) {
   });
 }
 
-function addError(text) {
-  errBox.textContent = errBox.textContent ? errBox.textContent + "\n" + text : text;
+function addErr(box, text) {
+  box.textContent = box.textContent ? box.textContent + "\n" + text : text;
 }
 
-function addResult(name, blob, [tw, th]) {
+function addShotResult(name, blob, [tw, th]) {
   const url = URL.createObjectURL(blob);
   const card = document.createElement("div");
   card.className = "card";
@@ -275,19 +416,17 @@ function addResult(name, blob, [tw, th]) {
     card.remove();
     const i = results.findIndex(r => r.url === url);
     if (i >= 0) results.splice(i, 1);
-    sync();
+    syncShots();
   });
   results.push({ name, url });
   resultsBox.appendChild(card);
-  sync();
+  syncShots();
 }
 
-function sync() {
+function syncShots() {
   downloadAllBtn.disabled = results.length === 0;
   clearAllBtn.disabled = results.length === 0;
 }
-
-applyLang();
 
 downloadAllBtn.addEventListener("click", () => {
   results.forEach((r, i) => setTimeout(() => {
@@ -300,9 +439,367 @@ clearAllBtn.addEventListener("click", () => {
   results.forEach(r => URL.revokeObjectURL(r.url));
   results.length = 0;
   resultsBox.innerHTML = "";
-  errBox.textContent = "";
-  sync();
+  errShot.textContent = "";
+  syncShots();
 });
+
+/* ---------- アイコン ---------- */
+const ICON_SIZES = [20, 29, 40, 58, 60, 76, 80, 87, 120, 152, 167, 180, 1024];
+// Xcode の AppIcon.appiconset が要求する対応表
+const ICON_MAP = [
+  ["icon-20.png",   "20x20",    "1x", "ipad"],
+  ["icon-40.png",   "20x20",    "2x", "iphone"],
+  ["icon-60.png",   "20x20",    "3x", "iphone"],
+  ["icon-29.png",   "29x29",    "1x", "ipad"],
+  ["icon-58.png",   "29x29",    "2x", "iphone"],
+  ["icon-87.png",   "29x29",    "3x", "iphone"],
+  ["icon-40.png",   "40x40",    "1x", "ipad"],
+  ["icon-80.png",   "40x40",    "2x", "iphone"],
+  ["icon-120.png",  "40x40",    "3x", "iphone"],
+  ["icon-120.png",  "60x60",    "2x", "iphone"],
+  ["icon-180.png",  "60x60",    "3x", "iphone"],
+  ["icon-76.png",   "76x76",    "1x", "ipad"],
+  ["icon-152.png",  "76x76",    "2x", "ipad"],
+  ["icon-167.png",  "83.5x83.5","2x", "ipad"],
+  ["icon-1024.png", "1024x1024","1x", "ios-marketing"],
+];
+
+const dropIcon = document.getElementById("drop-icon");
+const pickIcon = document.getElementById("pick-icon");
+const errIcon = document.getElementById("err-icon");
+const iconView = document.getElementById("iconview");
+const iconPreview = document.getElementById("iconPreview");
+const iconOneBtn = document.getElementById("iconOne");
+const iconZipBtn = document.getElementById("iconZip");
+
+let iconCanvases = null;   // { size: canvas }
+
+dropIcon.addEventListener("click", () => pickIcon.click());
+pickIcon.addEventListener("change", () => handleIcon(pickIcon.files[0]));
+["dragenter","dragover"].forEach(t => dropIcon.addEventListener(t, e => { e.preventDefault(); dropIcon.classList.add("hot"); }));
+["dragleave","drop"].forEach(t => dropIcon.addEventListener(t, e => { e.preventDefault(); dropIcon.classList.remove("hot"); }));
+dropIcon.addEventListener("drop", e => handleIcon(e.dataTransfer.files[0]));
+
+async function handleIcon(file) {
+  errIcon.textContent = "";
+  if (!file || !/^image\//.test(file.type)) { errIcon.textContent = t().noImages; return; }
+  const img = await loadImage(file);
+  if (!img) { errIcon.textContent = t().badFile(file.name); return; }
+
+  // 中央で正方形に切り抜き → 各サイズ
+  const side = Math.min(img.naturalWidth, img.naturalHeight);
+  const sx = (img.naturalWidth - side) / 2;
+  const sy = (img.naturalHeight - side) / 2;
+
+  iconCanvases = {};
+  for (const px of ICON_SIZES) {
+    const c = document.createElement("canvas");
+    c.width = c.height = px;
+    const ctx = c.getContext("2d");
+    ctx.imageSmoothingQuality = "high";
+    ctx.fillStyle = "#fff";                        // 透過は審査で弾かれるので白で埋める
+    ctx.fillRect(0, 0, px, px);
+    ctx.drawImage(img, sx, sy, side, side, 0, 0, px, px);
+    iconCanvases[px] = c;
+  }
+
+  iconPreview.src = iconCanvases[1024].toDataURL("image/png");
+  iconView.hidden = false;
+  iconOneBtn.disabled = false;
+  iconZipBtn.disabled = false;
+}
+
+iconOneBtn.addEventListener("click", () => {
+  if (!iconCanvases) return;
+  iconCanvases[1024].toBlob(blob => {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "icon-1024.png";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  }, "image/png");
+});
+
+iconZipBtn.addEventListener("click", async () => {
+  if (!iconCanvases) return;
+  const files = [];
+  for (const px of ICON_SIZES) {
+    const blob = await new Promise(r => iconCanvases[px].toBlob(r, "image/png"));
+    files.push({ name: `icon-${px}.png`, bytes: new Uint8Array(await blob.arrayBuffer()) });
+  }
+  const manifest = {
+    images: ICON_MAP.map(([filename, size, scale, idiom]) => ({ filename, size, scale, idiom })),
+    info: { version: 1, author: "shotfit" }
+  };
+  files.push({
+    name: "Contents.json",
+    bytes: new TextEncoder().encode(JSON.stringify(manifest, null, 2))
+  });
+
+  const blob = new Blob([makeZip(files)], { type: "application/zip" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "AppIcon.appiconset.zip";
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+});
+
+/** 最小限の ZIP（無圧縮 / STORE）。 */
+function makeZip(files) {
+  const enc = new TextEncoder();
+  const chunks = [];
+  const central = [];
+  let offset = 0;
+
+  for (const f of files) {
+    const name = enc.encode(f.name);
+    const crc = crc32(f.bytes);
+    const size = f.bytes.length;
+
+    const local = new Uint8Array(30 + name.length);
+    const lv = new DataView(local.buffer);
+    lv.setUint32(0, 0x04034b50, true);   // ローカルヘッダ
+    lv.setUint16(4, 20, true);           // 必要なバージョン
+    lv.setUint16(6, 0, true);            // フラグ
+    lv.setUint16(8, 0, true);            // 無圧縮
+    lv.setUint16(10, 0, true);           // 時刻
+    lv.setUint16(12, 0x21, true);        // 日付（1980-01-01）
+    lv.setUint32(14, crc, true);
+    lv.setUint32(18, size, true);
+    lv.setUint32(22, size, true);
+    lv.setUint16(26, name.length, true);
+    lv.setUint16(28, 0, true);           // 拡張フィールド長
+    local.set(name, 30);
+    chunks.push(local, f.bytes);
+
+    const cd = new Uint8Array(46 + name.length);
+    const cv = new DataView(cd.buffer);
+    cv.setUint32(0, 0x02014b50, true);   // 中央ディレクトリ
+    cv.setUint16(4, 20, true);
+    cv.setUint16(6, 20, true);
+    cv.setUint16(8, 0, true);
+    cv.setUint16(10, 0, true);
+    cv.setUint16(12, 0, true);
+    cv.setUint16(14, 0x21, true);
+    cv.setUint32(16, crc, true);
+    cv.setUint32(20, size, true);
+    cv.setUint32(24, size, true);
+    cv.setUint16(28, name.length, true);
+    cv.setUint16(30, 0, true);           // 拡張
+    cv.setUint16(32, 0, true);           // コメント
+    cv.setUint16(34, 0, true);           // ディスク番号
+    cv.setUint16(36, 0, true);           // 内部属性
+    cv.setUint32(38, 0, true);           // 外部属性
+    cv.setUint32(42, offset, true);      // ローカルヘッダ位置
+    cd.set(name, 46);
+    central.push(cd);
+
+    offset += local.length + size;
+  }
+
+  const cdSize = central.reduce((n, c) => n + c.length, 0);
+  const eocd = new Uint8Array(22);
+  const ev = new DataView(eocd.buffer);
+  ev.setUint32(0, 0x06054b50, true);
+  ev.setUint16(8, files.length, true);
+  ev.setUint16(10, files.length, true);
+  ev.setUint32(12, cdSize, true);
+  ev.setUint32(16, offset, true);
+
+  const out = new Uint8Array(offset + cdSize + 22);
+  let p = 0;
+  for (const c of chunks) { out.set(c, p); p += c.length; }
+  for (const c of central) { out.set(c, p); p += c.length; }
+  out.set(eocd, p);
+  return out;
+}
+
+let crcTable = null;
+function crc32(bytes) {
+  if (!crcTable) {
+    crcTable = new Uint32Array(256);
+    for (let i = 0; i < 256; i++) {
+      let c = i;
+      for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1;
+      crcTable[i] = c >>> 0;
+    }
+  }
+  let crc = 0xFFFFFFFF;
+  for (let i = 0; i < bytes.length; i++) crc = crcTable[(crc ^ bytes[i]) & 0xFF] ^ (crc >>> 8);
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+
+/* ---------- フレーム ---------- */
+const BG_PRESETS = [
+  { id:"dark",  css:"#121215", gradient:["#26262e", "#0e0e10"], text:"#ffffff" },
+  { id:"paper", css:"#f5f2ec", gradient:["#ffffff", "#eeeae2"], text:"#141210" },
+  { id:"violet",css:"#7c3aed", gradient:["#a855f7", "#5b21b6"], text:"#ffffff" },
+  { id:"sunset",css:"#ef4444", gradient:["#fb923c", "#ef4444"], text:"#ffffff" },
+  { id:"ocean", css:"#2563eb", gradient:["#38bdf8", "#1d4ed8"], text:"#ffffff" },
+  { id:"forest",css:"#059669", gradient:["#34d399", "#047857"], text:"#ffffff" },
+];
+let frameBg = BG_PRESETS[0];
+let frameSource = null;
+const FRAME_W = 1320, FRAME_H = 2868;
+
+const dropFrame = document.getElementById("drop-frame");
+const pickFrame = document.getElementById("pick-frame");
+const errFrame = document.getElementById("err-frame");
+const frameBody = document.getElementById("frameBody");
+const frameImg = document.getElementById("frameImg");
+const frameTitleEl = document.getElementById("frameTitle");
+const framePhoneEl = document.getElementById("framePhone");
+
+const swatchBox = document.getElementById("swatches");
+BG_PRESETS.forEach((bg, i) => {
+  const b = document.createElement("button");
+  b.className = "swatch" + (i === 0 ? " on" : "");
+  b.style.background = bg.gradient
+    ? `linear-gradient(160deg, ${bg.gradient[0]}, ${bg.gradient[1]})`
+    : bg.css;
+  b.title = bg.id;
+  b.addEventListener("click", () => {
+    frameBg = bg;
+    document.querySelectorAll(".swatch").forEach(x => x.classList.toggle("on", x === b));
+    renderFrame();
+  });
+  swatchBox.appendChild(b);
+});
+
+dropFrame.addEventListener("click", () => pickFrame.click());
+pickFrame.addEventListener("change", () => handleFrame(pickFrame.files[0]));
+["dragenter","dragover"].forEach(t => dropFrame.addEventListener(t, e => { e.preventDefault(); dropFrame.classList.add("hot"); }));
+["dragleave","drop"].forEach(t => dropFrame.addEventListener(t, e => { e.preventDefault(); dropFrame.classList.remove("hot"); }));
+dropFrame.addEventListener("drop", e => handleFrame(e.dataTransfer.files[0]));
+frameTitleEl.addEventListener("input", renderFrame);
+framePhoneEl.addEventListener("change", renderFrame);
+
+async function handleFrame(file) {
+  errFrame.textContent = "";
+  if (!file || !/^image\//.test(file.type)) { errFrame.textContent = t().noImages; return; }
+  const img = await loadImage(file);
+  if (!img) { errFrame.textContent = t().badFile(file.name); return; }
+  frameSource = img;
+  frameBody.hidden = false;
+  renderFrame();
+}
+
+/** 1320×2868 に「見出し + 端末フレーム + スクショ」を描く。 */
+function renderFrame() {
+  if (!frameSource) return;
+  const c = document.createElement("canvas");
+  c.width = FRAME_W; c.height = FRAME_H;
+  const ctx = c.getContext("2d");
+
+  // 背景
+  const g = ctx.createLinearGradient(0, 0, FRAME_W, FRAME_H);
+  g.addColorStop(0, frameBg.gradient[0]);
+  g.addColorStop(1, frameBg.gradient[1]);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, FRAME_W, FRAME_H);
+
+  // 見出し
+  const title = frameTitleEl.value.trim();
+  let top = 200;
+  if (title) {
+    ctx.fillStyle = frameBg.text;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    const lines = wrapText(ctx, title, FRAME_W - 160, 96);
+    let y = 170;
+    lines.forEach(line => {
+      let size = 96;
+      ctx.font = `bold ${size}px -apple-system, "SF Pro Display", Arial, sans-serif`;
+      while (ctx.measureText(line).width > FRAME_W - 160 && size > 48) {
+        size -= 4;
+        ctx.font = `bold ${size}px -apple-system, "SF Pro Display", Arial, sans-serif`;
+      }
+      ctx.fillText(line, FRAME_W / 2, y);
+      y += size * 1.2;
+    });
+    top = y + 90;
+  }
+
+  // 端末フレーム
+  const withPhone = framePhoneEl.checked;
+  const margin = 90;
+  const availH = FRAME_H - top - margin;
+  const availW = FRAME_W - margin * 2;
+  const shotAspect = frameSource.naturalWidth / frameSource.naturalHeight;
+  let screenW = Math.min(availW, availH * shotAspect);
+  let screenH = screenW / shotAspect;
+  if (screenH > availH) { screenH = availH; screenW = screenH * shotAspect; }
+
+  const bezel = withPhone ? 26 : 0;
+  const radius = withPhone ? 96 : 34;
+  const x = (FRAME_W - screenW) / 2;
+  const y = top + (availH - screenH) / 2;
+
+  if (withPhone) {
+    roundRect(ctx, x - bezel, y - bezel, screenW + bezel * 2, screenH + bezel * 2, radius);
+    ctx.fillStyle = "rgba(0,0,0,0.55)";
+    ctx.shadowColor = "rgba(0,0,0,0.45)";
+    ctx.shadowBlur = 60;
+    ctx.shadowOffsetY = 28;
+    ctx.fill();
+    ctx.shadowColor = "transparent";
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
+  }
+
+  ctx.save();
+  roundRect(ctx, x, y, screenW, screenH, withPhone ? radius - bezel : radius);
+  ctx.clip();
+  ctx.drawImage(frameSource, x, y, screenW, screenH);
+  ctx.restore();
+
+  frameImg.src = c.toDataURL("image/png");
+  frameDownloadCanvas = c;
+}
+
+let frameDownloadCanvas = null;
+
+function wrapText(ctx, text, maxWidth, fontSize) {
+  ctx.font = `bold ${fontSize}px -apple-system, "SF Pro Display", Arial, sans-serif`;
+  const words = text.split(/\s+/);
+  const lines = [];
+  let line = "";
+  for (const w of words) {
+    const test = line ? line + " " + w : w;
+    if (ctx.measureText(test).width > maxWidth && line) { lines.push(line); line = w; }
+    else line = test;
+  }
+  if (line) lines.push(line);
+  return lines.slice(0, 2);
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+document.getElementById("frameDownload").addEventListener("click", () => {
+  if (!frameDownloadCanvas) return;
+  frameDownloadCanvas.toBlob(blob => {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "framed-1320x2868.png";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  }, "image/png");
+});
+
+// 動作確認用
+window.__fitShot = fitShot;
+window.__renderFrame = renderFrame;
+window.__makeZip = makeZip;
+
+applyLang();
 </script>
 </body>
 </html>
