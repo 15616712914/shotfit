@@ -176,6 +176,7 @@
     <div id="frameBody" hidden>
       <div class="framePreview"><img id="frameImg" alt=""></div>
 
+      <div class="opts" id="devices"></div>
       <div class="swatches" id="swatches"></div>
 
       <label class="field">
@@ -638,9 +639,15 @@ const BG_PRESETS = [
   { id:"ocean", css:"#2563eb", gradient:["#38bdf8", "#1d4ed8"], text:"#ffffff" },
   { id:"forest",css:"#059669", gradient:["#34d399", "#047857"], text:"#ffffff" },
 ];
+const DEVICES = [
+  { id:"69",   label:'iPhone 6.9"', w:1320, h:2868, bezel:26, radius:96, island:true },
+  { id:"65",   label:'iPhone 6.5"', w:1242, h:2688, bezel:25, radius:92, island:true },
+  { id:"61",   label:'iPhone 6.1"', w:1179, h:2556, bezel:24, radius:88, island:true },
+  { id:"ipad", label:'iPad 13"',    w:2048, h:2732, bezel:34, radius:46, island:false },
+];
+let frameDevice = DEVICES[0];
 let frameBg = BG_PRESETS[0];
 let frameSource = null;
-const FRAME_W = 1320, FRAME_H = 2868;
 
 const dropFrame = document.getElementById("drop-frame");
 const pickFrame = document.getElementById("pick-frame");
@@ -649,6 +656,19 @@ const frameBody = document.getElementById("frameBody");
 const frameImg = document.getElementById("frameImg");
 const frameTitleEl = document.getElementById("frameTitle");
 const framePhoneEl = document.getElementById("framePhone");
+
+const deviceBox = document.getElementById("devices");
+DEVICES.forEach((d, i) => {
+  const b = document.createElement("button");
+  b.className = "chip" + (i === 0 ? " on" : "");
+  b.textContent = d.label;
+  b.addEventListener("click", () => {
+    frameDevice = d;
+    document.querySelectorAll("#devices .chip").forEach(x => x.classList.toggle("on", x === b));
+    renderFrame();
+  });
+  deviceBox.appendChild(b);
+});
 
 const swatchBox = document.getElementById("swatches");
 BG_PRESETS.forEach((bg, i) => {
@@ -684,55 +704,57 @@ async function handleFrame(file) {
   renderFrame();
 }
 
-/** 1320×2868 に「見出し + 端末フレーム + スクショ」を描く。 */
+/** 選んだ端末の寸法に「見出し + 端末フレーム + スクショ」を描く。 */
 function renderFrame() {
   if (!frameSource) return;
+  const FW = frameDevice.w, FH = frameDevice.h;
   const c = document.createElement("canvas");
-  c.width = FRAME_W; c.height = FRAME_H;
+  c.width = FW; c.height = FH;
   const ctx = c.getContext("2d");
 
   // 背景
-  const g = ctx.createLinearGradient(0, 0, FRAME_W, FRAME_H);
+  const g = ctx.createLinearGradient(0, 0, FW, FH);
   g.addColorStop(0, frameBg.gradient[0]);
   g.addColorStop(1, frameBg.gradient[1]);
   ctx.fillStyle = g;
-  ctx.fillRect(0, 0, FRAME_W, FRAME_H);
+  ctx.fillRect(0, 0, FW, FH);
 
   // 見出し
   const title = frameTitleEl.value.trim();
-  let top = 200;
+  const baseSize = Math.round(FW * 0.073);
+  let top = Math.round(FH * 0.07);
   if (title) {
     ctx.fillStyle = frameBg.text;
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
-    const lines = wrapText(ctx, title, FRAME_W - 160, 96);
-    let y = 170;
+    const lines = wrapText(ctx, title, FW - FW * 0.12, baseSize);
+    let y = top;
     lines.forEach(line => {
-      let size = 96;
+      let size = baseSize;
       ctx.font = `bold ${size}px -apple-system, "SF Pro Display", Arial, sans-serif`;
-      while (ctx.measureText(line).width > FRAME_W - 160 && size > 48) {
+      while (ctx.measureText(line).width > FW - FW * 0.12 && size > baseSize * 0.5) {
         size -= 4;
         ctx.font = `bold ${size}px -apple-system, "SF Pro Display", Arial, sans-serif`;
       }
-      ctx.fillText(line, FRAME_W / 2, y);
+      ctx.fillText(line, FW / 2, y);
       y += size * 1.2;
     });
-    top = y + 90;
+    top = y + Math.round(FH * 0.03);
   }
 
-  // 端末フレーム
+  // 端末フレームの寸法
   const withPhone = framePhoneEl.checked;
-  const margin = 90;
-  const availH = FRAME_H - top - margin;
-  const availW = FRAME_W - margin * 2;
-  const shotAspect = frameSource.naturalWidth / frameSource.naturalHeight;
-  let screenW = Math.min(availW, availH * shotAspect);
-  let screenH = screenW / shotAspect;
-  if (screenH > availH) { screenH = availH; screenW = screenH * shotAspect; }
+  const margin = Math.round(FW * 0.068);
+  const availH = FH - top - margin;
+  const availW = FW - margin * 2;
+  const devAspect = FW / FH;
+  let screenW = Math.min(availW, availH * devAspect);
+  let screenH = screenW / devAspect;
+  if (screenH > availH) { screenH = availH; screenW = screenH * devAspect; }
 
-  const bezel = withPhone ? 26 : 0;
-  const radius = withPhone ? 96 : 34;
-  const x = (FRAME_W - screenW) / 2;
+  const bezel = withPhone ? frameDevice.bezel : 0;
+  const radius = withPhone ? frameDevice.radius : Math.round(FW * 0.03);
+  const x = (FW - screenW) / 2;
   const y = top + (availH - screenH) / 2;
 
   if (withPhone) {
@@ -747,11 +769,24 @@ function renderFrame() {
     ctx.shadowOffsetY = 0;
   }
 
+  // スクショを画面領域いっぱいに（上寄せで）敷く
   ctx.save();
   roundRect(ctx, x, y, screenW, screenH, withPhone ? radius - bezel : radius);
   ctx.clip();
-  ctx.drawImage(frameSource, x, y, screenW, screenH);
+  const src = frameSource;
+  const sAspect = src.naturalWidth / src.naturalHeight;
+  const drawW = Math.max(screenW, screenH * sAspect);
+  const drawH = drawW / sAspect;
+  ctx.drawImage(src, x + (screenW - drawW) / 2, y, drawW, drawH);
   ctx.restore();
+
+  // ダイナミックアイランド（iPhone のみ）
+  if (withPhone && frameDevice.island) {
+    const iw = screenW * 0.26, ih = screenW * 0.075;
+    roundRect(ctx, x + (screenW - iw) / 2, y + screenW * 0.022, iw, ih, ih / 2);
+    ctx.fillStyle = "#000";
+    ctx.fill();
+  }
 
   frameImg.src = c.toDataURL("image/png");
   frameDownloadCanvas = c;
@@ -788,7 +823,7 @@ document.getElementById("frameDownload").addEventListener("click", () => {
   frameDownloadCanvas.toBlob(blob => {
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = "framed-1320x2868.png";
+    a.download = `framed-${frameDevice.w}x${frameDevice.h}.png`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   }, "image/png");
