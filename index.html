@@ -1,202 +1,89 @@
 <!DOCTYPE html>
+<!-- iPhone のスクショを App Store の寸法に変換する（ブラウザ内で完結） -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Shotfit — iPhone screenshots that App Store accepts</title>
-<meta name="description" content="Turn any iPhone screenshot into App Store-ready 1320×2868 images. Batch, no upload, no signup, no watermark.">
-<meta property="og:title" content="Shotfit — App Store screenshot resizer">
-<meta property="og:description" content="Any iPhone screenshot → 1320×2868. Runs entirely in your browser.">
-<meta property="og:type" content="website">
+<title>Shotfit — App Store screenshots</title>
+<meta name="description" content="Any iPhone screenshot → 1320×2868. Runs in your browser.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%230e0e10'/%3E%3Crect x='30' y='22' width='40' height='56' rx='8' fill='none' stroke='%23a855f7' stroke-width='6'/%3E%3C/svg%3E">
 <style>
   :root{
-    --bg:#0b0b0d; --panel:#141417; --panel2:#1b1b20; --line:#26262d;
-    --ink:#f4f4f6; --sub:#9b9ba5; --brand:#a855f7; --brand2:#7c3aed;
-    --ok:#34d399; --warn:#fbbf24; --r:18px; --max:960px;
+    --bg:#0e0e10; --panel:#16161a; --panel2:#1c1c21; --line:#2a2a31;
+    --ink:#f2f2f5; --sub:#9a9aa4; --brand:#a855f7; --ok:#34d399; --warn:#fbbf24;
   }
   *{box-sizing:border-box}
-  html{scroll-behavior:smooth}
   body{
     margin:0;background:var(--bg);color:var(--ink);
-    font:16px/1.6 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI","PingFang SC","Helvetica Neue",Arial,sans-serif;
-    -webkit-font-smoothing:antialiased;
+    font:15px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC",Arial,sans-serif;
+    padding:40px 20px;
   }
-  a{color:var(--ink)}
-  .glow{
-    position:fixed;inset:-30% 0 auto 0;height:60vh;z-index:0;pointer-events:none;
-    background:radial-gradient(60% 60% at 50% 0%,rgba(168,85,247,.22),transparent 70%);
+  .app{max-width:720px;margin:0 auto}
+  h1{font-size:20px;margin:0 0 4px;letter-spacing:-.2px}
+  p.sub{margin:0 0 20px;color:var(--sub);font-size:14px}
+  .drop{
+    border:2px dashed var(--line);border-radius:16px;padding:36px 16px;text-align:center;
+    background:var(--panel);cursor:pointer;transition:.15s;
   }
-  .wrap{position:relative;z-index:1;max-width:var(--max);margin:0 auto;padding:0 22px}
-
-  header{padding:22px 0;display:flex;align-items:center;gap:12px}
-  .logo{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:-.2px;font-size:18px}
-  .logo .mark{width:28px;height:28px;border-radius:8px;background:linear-gradient(140deg,var(--brand),var(--brand2));
-    display:grid;place-items:center;font-size:14px}
-  header nav{margin-left:auto;display:flex;gap:18px;font-size:14px;color:var(--sub)}
-  header nav a{color:var(--sub);text-decoration:none}
-  header nav a:hover{color:var(--ink)}
-
-  .hero{padding:56px 0 28px;text-align:center}
-  .badge{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--sub);
-    border:1px solid var(--line);background:rgba(255,255,255,.02);padding:6px 12px;border-radius:999px}
-  .dot{width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 10px var(--ok)}
-  h1{font-size:clamp(30px,5vw,46px);line-height:1.15;letter-spacing:-.03em;margin:18px 0 10px}
-  h1 em{font-style:normal;background:linear-gradient(100deg,var(--brand),#c084fc);-webkit-background-clip:text;
-    background-clip:text;color:transparent}
-  .lede{color:var(--sub);font-size:clamp(15px,2.2vw,18px);max-width:600px;margin:0 auto}
-
-  .tool{margin-top:34px;background:var(--panel);border:1px solid var(--line);border-radius:24px;padding:18px;
-    box-shadow:0 30px 80px -40px rgba(0,0,0,.9)}
-  .drop{border:2px dashed var(--line);border-radius:var(--r);padding:38px 18px;text-align:center;
-    cursor:pointer;transition:.15s;background:var(--panel2)}
   .drop.hot{border-color:var(--brand);background:#1d1428}
-  .drop strong{display:block;font-size:17px;margin-bottom:4px}
-  .drop span{color:var(--sub);font-size:13.5px}
-  .opts{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px}
-  .chip{border:1px solid var(--line);background:var(--panel2);color:var(--sub);padding:8px 14px;border-radius:999px;
-    font-size:13px;cursor:pointer;transition:.15s}
-  .chip:hover{color:var(--ink)}
+  .drop strong{display:block;font-size:16px;margin-bottom:4px}
+  .drop span{color:var(--sub);font-size:13px}
+  .opts{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+  .chip{
+    border:1px solid var(--line);background:var(--panel2);color:var(--sub);
+    padding:7px 13px;border-radius:999px;font-size:12.5px;cursor:pointer;
+  }
   .chip.on{border-color:var(--brand);color:var(--ink);background:#241636}
-  .hint{color:var(--sub);font-size:12.5px;margin-left:auto}
-  .err{color:var(--warn);font-size:13px;white-space:pre-line;margin-top:10px}
-  .results{display:grid;gap:10px;margin-top:16px}
-  .card{display:flex;gap:12px;align-items:center;background:var(--panel2);border:1px solid var(--line);
-    border-radius:14px;padding:10px}
-  .card img{width:52px;border-radius:8px;background:#000;display:block}
+  .err{color:var(--warn);font-size:13px;white-space:pre-line}
+  .results{display:grid;gap:8px;margin-top:14px}
+  .card{
+    display:flex;align-items:center;gap:12px;background:var(--panel2);
+    border:1px solid var(--line);border-radius:12px;padding:10px;
+  }
+  .card img{width:46px;border-radius:6px;background:#000}
   .meta{flex:1;min-width:0}
-  .name{font-size:13px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .size{font-size:12px;color:var(--ok);margin-top:2px;font-variant-numeric:tabular-nums}
-  .btns{display:flex;gap:8px}
-  .btn{border:1px solid var(--line);background:transparent;color:var(--ink);padding:8px 14px;border-radius:10px;
-    font-size:13px;cursor:pointer;text-decoration:none;white-space:nowrap}
+  .name{font-size:12.5px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .size{font-size:12px;color:var(--ok);margin-top:2px}
+  .row{display:flex;gap:8px}
+  .btn{
+    border:1px solid var(--line);background:transparent;color:var(--ink);
+    padding:7px 13px;border-radius:9px;font-size:12.5px;cursor:pointer;text-decoration:none;
+  }
   .btn:hover{border-color:var(--brand)}
-  .btn.primary{background:var(--brand);border-color:transparent;color:#fff}
-  .btn.primary:hover{background:#9333ea}
+  .btn.main{background:var(--brand);border-color:transparent;color:#fff}
   .btn.ghost{color:var(--sub)}
   .btn:disabled{opacity:.4;cursor:default}
-  .actions{display:flex;gap:10px;margin-top:14px}
-
-  section{padding:64px 0}
-  h2{font-size:clamp(22px,3vw,28px);letter-spacing:-.02em;margin:0 0 8px}
-  .sub{color:var(--sub);margin:0 0 28px;font-size:15px}
-  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-  .step{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px}
-  .step b{display:block;font-size:14px;margin-bottom:6px}
-  .step p{margin:0;color:var(--sub);font-size:13.5px}
-  .num{width:26px;height:26px;border-radius:8px;background:#241636;color:#c084fc;display:grid;place-items:center;
-    font-size:12.5px;font-weight:700;margin-bottom:10px}
-
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-  .fact{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px}
-  .fact b{font-size:14px;display:block;margin-bottom:6px}
-  .fact p{margin:0;color:var(--sub);font-size:13.5px}
-
-  details{border-top:1px solid var(--line);padding:16px 0}
-  details summary{cursor:pointer;font-weight:600;font-size:15px;list-style:none}
-  details summary::-webkit-details-marker{display:none}
-  details summary::after{content:"+";float:right;color:var(--sub)}
-  details[open] summary::after{content:"−"}
-  details p{color:var(--sub);font-size:14px;margin:10px 0 0}
-
-  footer{border-top:1px solid var(--line);padding:26px 0 60px;color:var(--sub);font-size:13px;
-    display:flex;flex-wrap:wrap;gap:12px;align-items:center}
-  footer .spacer{flex:1}
-  @media (max-width:720px){
-    .steps,.grid2{grid-template-columns:1fr}
-    header nav{display:none}
-    .hint{display:none}
-  }
+  .actions{display:flex;gap:8px;margin-top:14px}
 </style>
 </head>
 <body>
-<div class="glow"></div>
+<div class="app">
+  <h1>Shotfit</h1>
+  <p class="sub">Any iPhone screenshot → 1320×2868. Nothing is uploaded.</p>
 
-<div class="wrap">
-  <header>
-    <div class="logo"><span class="mark">▣</span> Shotfit</div>
-    <nav>
-      <a href="#how">How it works</a>
-      <a href="#faq">FAQ</a>
-      <a href="#tool">Open tool</a>
-    </nav>
-  </header>
-
-  <div class="hero">
-    <span class="badge"><i class="dot"></i> Runs in your browser · nothing is uploaded</span>
-    <h1>iPhone screenshots that <em>App Store accepts</em></h1>
-    <p class="lede">Drop any screenshot from any iPhone. Get a 1320 × 2868 PNG that passes App Store Connect's size check — no crop marks, no stretching, no signup.</p>
+  <div class="drop" id="drop">
+    <strong>Drop screenshots here</strong>
+    <span>or click to choose · PNG / JPG · multiple OK</span>
+    <input type="file" id="picker" accept="image/*" multiple hidden>
   </div>
 
-  <div class="tool" id="tool">
-    <div class="drop" id="drop">
-      <strong>Drop screenshots here</strong>
-      <span>or click to choose · PNG / JPG · multiple files OK</span>
-      <input type="file" id="picker" accept="image/*" multiple hidden>
-    </div>
-
-    <div class="opts">
-      <button class="chip on" data-size="69">6.9" · 1320×2868</button>
-      <button class="chip" data-size="67">6.7" · 1290×2796</button>
-      <button class="chip" data-size="65">6.5" · 1242×2688</button>
-      <span class="hint">Output is always PNG, RGB, no alpha.</span>
-    </div>
-
-    <div class="err" id="err"></div>
-    <div class="results" id="results"></div>
-
-    <div class="actions">
-      <button class="btn primary" id="downloadAll" disabled>Download all</button>
-      <button class="btn ghost" id="clearAll" disabled>Clear list</button>
-    </div>
+  <div class="opts">
+    <button class="chip on" data-size="69">6.9" · 1320×2868</button>
+    <button class="chip" data-size="67">6.7" · 1290×2796</button>
+    <button class="chip" data-size="65">6.5" · 1242×2688</button>
   </div>
 
-  <section id="how">
-    <h2>Three steps</h2>
-    <p class="sub">No install, no account, no watermark.</p>
-    <div class="steps">
-      <div class="step"><div class="num">1</div><b>Drop your screenshots</b><p>Straight from your iPhone or the Simulator. Batch is fine.</p></div>
-      <div class="step"><div class="num">2</div><b>We refit them</b><p>Scaled by height, then centered. Aspect ratio is never changed.</p></div>
-      <div class="step"><div class="num">3</div><b>Upload to App Store</b><p>Download the PNG and drop it into App Store Connect.</p></div>
-    </div>
-  </section>
+  <div class="err" id="err"></div>
+  <div class="results" id="results"></div>
 
-  <section>
-    <h2>Why this exists</h2>
-    <p class="sub">App Store Connect is picky about screenshot sizes. This removes the guesswork.</p>
-    <div class="grid2">
-      <div class="fact"><b>Any iPhone, one output</b><p>6.1" or 6.9", Pro or not — all of them land on the same accepted size.</p></div>
-      <div class="fact"><b>Nothing leaves your Mac</b><p>Conversion runs on a canvas in this tab. There is no server and no upload.</p></div>
-      <div class="fact"><b>No alpha, ever</b><p>Transparent PNGs get rejected. Output is always flattened to RGB.</p></div>
-      <div class="fact"><b>Wrong device? We say so</b><p>iPad or landscape shots are skipped with a message instead of being cut in half.</p></div>
-    </div>
-  </section>
-
-  <section id="faq">
-    <h2>FAQ</h2>
-    <details open><summary>Which sizes does App Store Connect accept?</summary>
-      <p>For iPhone you need the 6.9" slot (1320 × 2868). Apple generates the smaller sizes from it. 6.7" (1290 × 2796) and 6.5" (1242 × 2688) are still accepted if you already have them.</p></details>
-    <details><summary>Does it crop my screenshot?</summary>
-      <p>Only horizontally, by a few pixels (2–3 px), because the aspect ratios differ by under 1%. Nothing visible is lost. If the difference is larger than 10% the file is skipped.</p></details>
-    <details><summary>Are my screenshots uploaded?</summary>
-      <p>No. Everything happens in this tab with the Canvas API. You can even turn off Wi-Fi and it keeps working.</p></details>
-    <details><summary>Can I use it on an iPhone?</summary>
-      <p>Yes — tap the drop area to pick photos. Downloading several files at once needs a desktop browser; one at a time works everywhere.</p></details>
-  </section>
-
-  <footer>
-    <span>Shotfit · a small tool for iOS developers</span>
-    <span class="spacer"></span>
-    <span>No upload · no tracking · no cookies</span>
-  </footer>
+  <div class="actions">
+    <button class="btn main" id="downloadAll" disabled>Download all</button>
+    <button class="btn ghost" id="clearAll" disabled>Clear</button>
+  </div>
 </div>
 
 <script>
-const SIZES = {
-  "69": [1320, 2868],
-  "67": [1290, 2796],
-  "65": [1242, 2688],
-};
+const SIZES = { "69":[1320,2868], "67":[1290,2796], "65":[1242,2688] };
 const state = { sizes: new Set(["69"]) };
 const results = [];
 
@@ -211,7 +98,7 @@ document.querySelectorAll("[data-size]").forEach(btn => {
   btn.addEventListener("click", () => {
     const key = btn.dataset.size;
     if (state.sizes.has(key)) {
-      if (state.sizes.size === 1) return;     // 最後の 1 つは外せない
+      if (state.sizes.size === 1) return;
       state.sizes.delete(key); btn.classList.remove("on");
     } else {
       state.sizes.add(key); btn.classList.add("on");
@@ -233,30 +120,23 @@ function convert(img, [tw, th]) {
   const canvas = document.createElement("canvas");
   canvas.width = tw; canvas.height = th;
   const ctx = canvas.getContext("2d");
-  ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = "high";
 
   if (Math.round(w * (th / h)) >= tw) {
-    const scale = th / h;
-    const sw = tw / scale;
+    const scale = th / h, sw = tw / scale;
     ctx.drawImage(img, (w - sw) / 2, 0, sw, h, 0, 0, tw, th);
   } else {
-    const scale = tw / w;
-    const sh = th / scale;
-    ctx.fillStyle = sampleEdge(img);
+    const scale = tw / w, sh = th / scale;
+    const c = document.createElement("canvas");
+    c.width = c.height = 1;
+    const x = c.getContext("2d");
+    x.drawImage(img, 0, 0, 1, 1, 0, 0, 1, 1);
+    const d = x.getImageData(0, 0, 1, 1).data;
+    ctx.fillStyle = `rgb(${d[0]},${d[1]},${d[2]})`;
     ctx.fillRect(0, 0, tw, th);
     ctx.drawImage(img, 0, (h - sh) / 2, w, sh, 0, 0, tw, th);
   }
   return canvas;
-}
-
-function sampleEdge(img) {
-  const c = document.createElement("canvas");
-  c.width = c.height = 1;
-  const x = c.getContext("2d");
-  x.drawImage(img, 0, 0, 1, 1, 0, 0, 1, 1);
-  const d = x.getImageData(0, 0, 1, 1).data;
-  return `rgb(${d[0]},${d[1]},${d[2]})`;
 }
 
 async function handleFiles(files) {
@@ -270,10 +150,7 @@ async function handleFiles(files) {
     for (const key of [...state.sizes]) {
       const target = SIZES[key];
       const canvas = convert(img, target);
-      if (!canvas) {
-        addError(`${file.name}: ${img.naturalWidth}×${img.naturalHeight} is not an iPhone aspect — skipped ${target[0]}×${target[1]}.`);
-        continue;
-      }
+      if (!canvas) { addError(`${file.name}: not an iPhone aspect — skipped ${target[0]}×${target[1]}.`); continue; }
       const blob = await new Promise(r => canvas.toBlob(r, "image/png"));
       addResult(`${file.name.replace(/\.[^.]+$/, "")}-${target[0]}x${target[1]}.png`, blob, target);
     }
@@ -304,19 +181,17 @@ function addResult(name, blob, [tw, th]) {
       <div class="name">${name}</div>
       <div class="size">${tw} × ${th} · PNG · no alpha</div>
     </div>
-    <div class="btns">
+    <div class="row">
       <a class="btn" href="${url}" download="${name}">Download</a>
-      <button class="btn ghost" title="Remove from list">✕</button>
+      <button class="btn ghost" title="Remove">✕</button>
     </div>`;
-
-  card.querySelector(".btns .ghost").addEventListener("click", () => {
+  card.querySelector(".row .ghost").addEventListener("click", () => {
     URL.revokeObjectURL(url);
     card.remove();
     const i = results.findIndex(r => r.url === url);
     if (i >= 0) results.splice(i, 1);
     sync();
   });
-
   results.push({ name, url });
   resultsBox.appendChild(card);
   sync();
@@ -331,7 +206,7 @@ downloadAllBtn.addEventListener("click", () => {
   results.forEach((r, i) => setTimeout(() => {
     const a = document.createElement("a");
     a.href = r.url; a.download = r.name; a.click();
-  }, i * 250));
+  }, i * 200));
 });
 
 clearAllBtn.addEventListener("click", () => {
@@ -341,9 +216,6 @@ clearAllBtn.addEventListener("click", () => {
   errBox.textContent = "";
   sync();
 });
-
-// 動作確認用
-window.__convert = (img, key) => convert(img, SIZES[key]);
 </script>
 </body>
 </html>
