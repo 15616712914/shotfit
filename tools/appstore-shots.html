@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<!-- App Store 用スクリーンショット変換（ブラウザだけで動く・画像は送信しない） -->
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>App Store 截图转换 · AIMagFram</title>
+<style>
+  :root {
+    --bg: #0e0e10; --panel: #17171a; --line: #2a2a30;
+    --ink: #f5f5f7; --sub: #9a9aa3; --brand: #a855f7; --ok: #34d399; --warn: #fbbf24;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; background: var(--bg); color: var(--ink);
+    font: 15px/1.5 -apple-system, "SF Pro Text", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+    padding: 32px 20px 64px;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; }
+  h1 { font-size: 24px; margin: 0 0 6px; letter-spacing: -0.01em; }
+  .lede { color: var(--sub); margin: 0 0 24px; font-size: 14px; }
+  .drop {
+    border: 2px dashed var(--line); border-radius: 18px; padding: 40px 20px;
+    text-align: center; transition: .15s; background: var(--panel); cursor: pointer;
+  }
+  .drop.hot { border-color: var(--brand); background: #1d1425; }
+  .drop b { font-size: 16px; }
+  .drop p { color: var(--sub); font-size: 13px; margin: 8px 0 0; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 16px; }
+  .chip {
+    border: 1px solid var(--line); background: var(--panel); color: var(--ink);
+    padding: 7px 14px; border-radius: 999px; font-size: 13px; cursor: pointer;
+  }
+  .chip.on { border-color: var(--brand); background: #241634; }
+  .chip:disabled { opacity: .45; cursor: default; }
+  .results { margin-top: 26px; display: grid; gap: 14px; }
+  .card {
+    display: flex; gap: 14px; align-items: center; background: var(--panel);
+    border: 1px solid var(--line); border-radius: 14px; padding: 12px;
+  }
+  .card img { width: 56px; border-radius: 8px; background: #000; }
+  .card .meta { flex: 1; min-width: 0; }
+  .card .name { font-size: 13px; color: var(--sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card .size { font-size: 12px; color: var(--ok); margin-top: 2px; }
+  .card .size.bad { color: var(--warn); }
+  .card a {
+    color: var(--ink); text-decoration: none; border: 1px solid var(--line);
+    padding: 7px 12px; border-radius: 10px; font-size: 13px; white-space: nowrap;
+  }
+  .card a:hover { border-color: var(--brand); }
+  .foot { margin-top: 28px; color: var(--sub); font-size: 12px; line-height: 1.7; }
+  .err { color: var(--warn); font-size: 13px; margin-top: 8px; }
+  .bulk { margin-top: 18px; }
+  .bulk button {
+    background: var(--brand); color: #fff; border: 0; border-radius: 12px;
+    padding: 12px 22px; font-size: 15px; font-weight: 600; cursor: pointer;
+  }
+  .bulk button.ghost {
+    background: transparent; color: var(--sub);
+    border: 1px solid var(--line); margin-left: 8px;
+  }
+  .bulk button.ghost:hover { color: var(--ink); border-color: var(--brand); }
+  .bulk button:disabled { opacity: .4; cursor: default; }
+  .card .del {
+    border: 1px solid var(--line); background: transparent; color: var(--sub);
+    width: 30px; height: 30px; border-radius: 8px; cursor: pointer; font-size: 14px;
+    line-height: 1; padding: 0;
+  }
+  .card .del:hover { color: #fff; border-color: var(--brand); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>App Store 截图转换</h1>
+  <p class="lede">任何 iPhone 机型截的图，转成 App Store 认可的尺寸。图片只在本机处理，不会上传。</p>
+
+  <div class="drop" id="drop">
+    <b>把截图拖到这里</b>
+    <p>或者点击选择文件（可多选）· PNG / JPG</p>
+    <input type="file" id="picker" accept="image/*" multiple hidden>
+  </div>
+
+  <div class="row">
+    <button class="chip on" data-size="69">6.9" · 1320×2868</button>
+    <button class="chip" data-size="65">6.5" · 1242×2688（旧机型用）</button>
+    <span style="color:var(--sub);font-size:12px">输出会自动去透明、等比缩放、居中裁边</span>
+  </div>
+
+  <div class="err" id="err"></div>
+  <div class="results" id="results"></div>
+
+  <div class="bulk">
+    <button id="downloadAll" disabled>下载全部</button>
+    <button id="clearAll" class="ghost" disabled>清空列表</button>
+  </div>
+
+  <div class="foot">
+    · 比例差超过 10% 的图（iPad、横屏）会被跳过，不会把画面切掉一半<br>
+    · 输出为 PNG / RGB / 无 alpha，符合 App Store Connect 要求<br>
+    · 全部在浏览器里完成，断网也能用（保存本文件即可）
+  </div>
+</div>
+
+<script>
+const SIZES = { "69": [1320, 2868], "65": [1242, 2688] };
+const results = [];
+const state = { sizes: new Set(["69"]) };
+
+const drop = document.getElementById("drop");
+const picker = document.getElementById("picker");
+const resultsBox = document.getElementById("results");
+const errBox = document.getElementById("err");
+const downloadAllBtn = document.getElementById("downloadAll");
+const clearAllBtn = document.getElementById("clearAll");
+
+document.querySelectorAll("[data-size]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const key = btn.dataset.size;
+    if (state.sizes.has(key) && state.sizes.size > 1) {
+      state.sizes.delete(key); btn.classList.remove("on");
+    } else {
+      state.sizes.add(key); btn.classList.add("on");
+    }
+  });
+});
+
+drop.addEventListener("click", () => picker.click());
+picker.addEventListener("change", () => handleFiles([...picker.files]));
+["dragenter", "dragover"].forEach(t => drop.addEventListener(t, e => {
+  e.preventDefault(); drop.classList.add("hot");
+}));
+["dragleave", "drop"].forEach(t => drop.addEventListener(t, e => {
+  e.preventDefault(); drop.classList.remove("hot");
+}));
+drop.addEventListener("drop", e => handleFiles([...e.dataTransfer.files]));
+
+/** 縦横比を保ったまま目標寸法へ。足りない分は端の色で埋める。 */
+function convert(img, target) {
+  const [tw, th] = target;
+  const w = img.naturalWidth, h = img.naturalHeight;
+  const diff = Math.abs((w / h) - (tw / th)) / (tw / th);
+  if (diff > 0.10) return null;   // iPhone 以外は切らずに諦める
+
+  const canvas = document.createElement("canvas");
+  canvas.width = tw; canvas.height = th;
+  const ctx = canvas.getContext("2d");
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+
+  if (Math.round(w * (th / h)) >= tw) {
+    // 高さ基準で拡大して、幅を中央で切る
+    const scale = th / h;
+    const sw = tw / scale;
+    const sx = (w - sw) / 2;
+    ctx.drawImage(img, sx, 0, sw, h, 0, 0, tw, th);
+  } else {
+    // 幅基準で拡大して、上下を端の色で埋める
+    const scale = tw / w;
+    const sh = th / scale;
+    const sy = (h - sh) / 2;
+    ctx.fillStyle = sampleEdge(img);
+    ctx.fillRect(0, 0, tw, th);
+    ctx.drawImage(img, 0, sy, w, sh, 0, 0, tw, th);
+  }
+  return canvas;
+}
+
+/** 左上の画素を背景色として使う。 */
+function sampleEdge(img) {
+  const c = document.createElement("canvas");
+  c.width = c.height = 1;
+  const x = c.getContext("2d");
+  x.drawImage(img, 0, 0, 1, 1, 0, 0, 1, 1);
+  const d = x.getImageData(0, 0, 1, 1).data;
+  return `rgb(${d[0]},${d[1]},${d[2]})`;
+}
+
+async function handleFiles(files) {
+  errBox.textContent = "";
+  const images = files.filter(f => /^image\//.test(f.type));
+  if (!images.length) { errBox.textContent = "没有可用的图片文件。"; return; }
+
+  for (const file of images) {
+    const img = await loadImage(file);
+    if (!img) { addError(`${file.name}：无法读取（HEIC 请先转成 PNG/JPG）`); continue; }
+    for (const key of [...state.sizes]) {
+      const target = SIZES[key];
+      const canvas = convert(img, target);
+      if (!canvas) {
+        addError(`${file.name}：比例不符（${img.naturalWidth}×${img.naturalHeight}），已跳过 ${target[0]}×${target[1]}`);
+        continue;
+      }
+      const blob = await new Promise(r => canvas.toBlob(r, "image/png"));
+      const name = `${file.name.replace(/\.[^.]+$/, "")}-${target[0]}x${target[1]}.png`;
+      addResult(name, blob, target);
+    }
+  }
+}
+
+function loadImage(file) {
+  return new Promise(resolve => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+    img.src = url;
+  });
+}
+
+function addError(text) {
+  errBox.textContent = errBox.textContent ? errBox.textContent + "\n" + text : text;
+  errBox.style.whiteSpace = "pre-line";
+}
+
+function addResult(name, blob, [tw, th]) {
+  const url = URL.createObjectURL(blob);
+  results.push({ name, url });
+  const card = document.createElement("div");
+  card.className = "card";
+  card.innerHTML = `
+    <img src="${url}" alt="">
+    <div class="meta">
+      <div class="name">${name}</div>
+      <div class="size">${tw} × ${th} · PNG · 无透明</div>
+    </div>
+    <a href="${url}" download="${name}">下载</a>
+    <button class="del" title="从列表移除">✕</button>`;
+
+  const entry = { name, url, card };
+  card.querySelector(".del").addEventListener("click", () => {
+    URL.revokeObjectURL(url);
+    card.remove();
+    const i = results.findIndex(r => r.url === url);
+    if (i >= 0) results.splice(i, 1);
+    syncBulk();
+  });
+  results.push(entry);
+  resultsBox.appendChild(card);
+  syncBulk();
+}
+
+function syncBulk() {
+  downloadAllBtn.disabled = results.length === 0;
+  clearAllBtn.disabled = results.length === 0;
+}
+
+downloadAllBtn.addEventListener("click", () => {
+  results.forEach((r, i) => setTimeout(() => {
+    const a = document.createElement("a");
+    a.href = r.url; a.download = r.name; a.click();
+  }, i * 250));
+});
+
+// 一覧を空にする（生成済みファイルはメモリ上だけなので、消せば終わり）
+clearAllBtn.addEventListener("click", () => {
+  results.forEach(r => URL.revokeObjectURL(r.url));
+  results.length = 0;
+  resultsBox.innerHTML = "";
+  errBox.textContent = "";
+  syncBulk();
+});
+
+// 動作確認用（ページ内から呼べる）
+window.__convert = (img, key) => convert(img, SIZES[key]);
+</script>
+</body>
+</html>
