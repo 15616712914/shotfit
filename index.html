@@ -82,6 +82,7 @@
   /* フレーム */
   .framePreview{margin-top:14px;border-radius:12px;overflow:hidden;background:#000;border:1px solid var(--line)}
   .framePreview img{display:block;width:100%;height:auto}
+  .count{font-size:12.5px;color:var(--sub);margin-top:8px}
   .swatches{display:flex;gap:8px;margin:12px 0;flex-wrap:wrap}
   .swatch{width:34px;height:34px;border-radius:9px;border:2px solid transparent;cursor:pointer}
   .swatch.on{border-color:var(--brand)}
@@ -167,14 +168,15 @@
   <!-- フレーム -->
   <section class="panel" id="panel-frame" hidden>
     <div class="drop" id="drop-frame">
-      <strong data-i18n="frameDrop">Drop a screenshot</strong>
+      <strong data-i18n="frameDrop">Drop screenshots</strong>
       <span data-i18n="frameDropSub">or click to choose · it gets a phone frame and a headline</span>
-      <input type="file" id="pick-frame" accept="image/*" hidden>
+      <input type="file" id="pick-frame" accept="image/*" multiple hidden>
     </div>
     <div class="err" id="err-frame"></div>
 
     <div id="frameBody" hidden>
       <div class="framePreview"><img id="frameImg" alt=""></div>
+      <div class="count" id="frameCount"></div>
 
       <div class="opts" id="devices"></div>
       <div class="swatches" id="swatches"></div>
@@ -191,7 +193,7 @@
       </label>
 
       <div class="actions">
-        <button class="btn main" id="frameDownload" data-i18n="frameDownload">Download 1320×2868</button>
+        <button class="btn main" id="frameDownload" data-i18n="frameDownload">Download PNG</button>
       </div>
     </div>
   </section>
@@ -202,9 +204,10 @@
 const I18N = {
   en: { sub:"App Store screenshots and app icons. Nothing is uploaded.",
         tabShot:"Screenshots", tabIcon:"App icon", tabFrame:"Frame",
-        frameDrop:"Drop a screenshot", frameDropSub:"or click to choose · it gets a phone frame and a headline",
+        frameDrop:"Drop screenshots", frameDropSub:"or click to choose · phone frame and headline for every image",
         frameTitle:"Headline (optional)", frameTitleHint:"Two lines max, resized automatically",
-        framePhone:"Phone frame", frameDownload:"Download 1320×2868",
+        framePhone:"Phone frame", frameDownload:"Download PNG",
+        frameDownloadZip:n=>`Download ${n} screenshots (.zip)`, frameCount:n=>`${n} images · first one shown`,
         drop:"Drop screenshots here", dropSub:"or click to choose · PNG / JPG · multiple OK",
         downloadAll:"Download all", clear:"Clear", download:"Download",
         spec:(w,h)=>`${w} × ${h} · PNG · no alpha`,
@@ -217,9 +220,10 @@ const I18N = {
         title:"Shotfit — App Store screenshots & app icons" },
   zh: { sub:"App Store 截图转换 + App 图标生成，图片不会上传。",
         tabShot:"截图", tabIcon:"App 图标", tabFrame:"加外壳",
-        frameDrop:"把截图拖到这里", frameDropSub:"或点击选择 · 会自动套上手机边框和标题",
+        frameDrop:"把截图拖到这里", frameDropSub:"或点击选择 · 可多选，每张都会套上边框和标题",
         frameTitle:"标题（可选）", frameTitleHint:"最多两行，字号自动调整",
-        framePhone:"显示手机边框", frameDownload:"下载 1320×2868",
+        framePhone:"显示手机边框", frameDownload:"下载 PNG",
+        frameDownloadZip:n=>`下载 ${n} 张（zip）`, frameCount:n=>`共 ${n} 张 · 预览显示第一张`,
         drop:"把截图拖到这里", dropSub:"或点击选择 · PNG / JPG · 可多选",
         downloadAll:"下载全部", clear:"清空", download:"下载",
         spec:(w,h)=>`${w} × ${h} · PNG · 无透明`,
@@ -232,9 +236,10 @@ const I18N = {
         title:"Shotfit — App Store 截图与图标" },
   ja: { sub:"App Store 用スクショ変換とアプリアイコン生成。画像は送信しません。",
         tabShot:"スクショ", tabIcon:"アイコン", tabFrame:"フレーム",
-        frameDrop:"スクショをドロップ", frameDropSub:"またはクリックして選択 · 端末フレームと見出しを付けます",
+        frameDrop:"スクショをドロップ", frameDropSub:"またはクリックして選択 · 複数可。すべてにフレームと見出しを付けます",
         frameTitle:"見出し（任意）", frameTitleHint:"2 行まで、自動で縮小",
-        framePhone:"端末フレームを表示", frameDownload:"1320×2868 をダウンロード",
+        framePhone:"端末フレームを表示", frameDownload:"PNG をダウンロード",
+        frameDownloadZip:n=>`${n} 枚をダウンロード（zip）`, frameCount:n=>`${n} 枚 · プレビューは 1 枚目`,
         drop:"スクリーンショットをドロップ", dropSub:"またはクリックして選択 · PNG / JPG · 複数可",
         downloadAll:"すべてダウンロード", clear:"クリア", download:"ダウンロード",
         spec:(w,h)=>`${w} × ${h} · PNG · 透過なし`,
@@ -247,9 +252,10 @@ const I18N = {
         title:"Shotfit — App Store 用スクショとアイコン" },
   ko: { sub:"앱스토어 스크린샷 변환과 앱 아이콘 생성. 이미지는 전송되지 않습니다.",
         tabShot:"스크린샷", tabIcon:"앱 아이콘", tabFrame:"프레임",
-        frameDrop:"스크린샷을 놓으세요", frameDropSub:"또는 클릭해서 선택 · 기기 프레임과 제목을 입힙니다",
+        frameDrop:"스크린샷을 놓으세요", frameDropSub:"또는 클릭해서 선택 · 여러 장 가능. 모두 프레임과 제목을 입힙니다",
         frameTitle:"제목 (선택)", frameTitleHint:"최대 2줄, 자동 축소",
-        framePhone:"기기 프레임 표시", frameDownload:"1320×2868 다운로드",
+        framePhone:"기기 프레임 표시", frameDownload:"PNG 다운로드",
+        frameDownloadZip:n=>`${n}장 다운로드 (zip)`, frameCount:n=>`${n}장 · 미리보기는 첫 장`,
         drop:"스크린샷을 여기로 끌어다 놓으세요", dropSub:"또는 클릭해서 선택 · PNG / JPG · 여러 장 가능",
         downloadAll:"모두 다운로드", clear:"지우기", download:"다운로드",
         spec:(w,h)=>`${w} × ${h} · PNG · 투명 없음`,
@@ -281,6 +287,7 @@ function applyLang() {
     if (v) el.textContent = v;
   });
   document.getElementById("lang").value = lang;
+  if (window.__renderFrame) window.__renderFrame();
   document.querySelectorAll(".card").forEach(card => {
     const [w, h] = (card.dataset.size || "").split("x").map(Number);
     if (w && h) card.querySelector(".size").textContent = t().spec(w, h);
@@ -647,7 +654,7 @@ const DEVICES = [
 ];
 let frameDevice = DEVICES[0];
 let frameBg = BG_PRESETS[0];
-let frameSource = null;
+let frameSources = [];
 
 const dropFrame = document.getElementById("drop-frame");
 const pickFrame = document.getElementById("pick-frame");
@@ -656,6 +663,8 @@ const frameBody = document.getElementById("frameBody");
 const frameImg = document.getElementById("frameImg");
 const frameTitleEl = document.getElementById("frameTitle");
 const framePhoneEl = document.getElementById("framePhone");
+const frameCountEl = document.getElementById("frameCount");
+const frameDownloadEl = document.getElementById("frameDownload");
 
 const deviceBox = document.getElementById("devices");
 DEVICES.forEach((d, i) => {
@@ -687,26 +696,40 @@ BG_PRESETS.forEach((bg, i) => {
 });
 
 dropFrame.addEventListener("click", () => pickFrame.click());
-pickFrame.addEventListener("change", () => handleFrame(pickFrame.files[0]));
+pickFrame.addEventListener("change", () => handleFrame(pickFrame.files));
 ["dragenter","dragover"].forEach(t => dropFrame.addEventListener(t, e => { e.preventDefault(); dropFrame.classList.add("hot"); }));
 ["dragleave","drop"].forEach(t => dropFrame.addEventListener(t, e => { e.preventDefault(); dropFrame.classList.remove("hot"); }));
-dropFrame.addEventListener("drop", e => handleFrame(e.dataTransfer.files[0]));
+dropFrame.addEventListener("drop", e => handleFrame(e.dataTransfer.files));
 frameTitleEl.addEventListener("input", renderFrame);
 framePhoneEl.addEventListener("change", renderFrame);
 
-async function handleFrame(file) {
+async function handleFrame(files) {
   errFrame.textContent = "";
-  if (!file || !/^image\//.test(file.type)) { errFrame.textContent = t().noImages; return; }
-  const img = await loadImage(file);
-  if (!img) { errFrame.textContent = t().badFile(file.name); return; }
-  frameSource = img;
+  const list = [...files];
+  if (!list.length) return;
+  if (list.some(f => !/^image\//.test(f.type))) { errFrame.textContent = t().noImages; return; }
+  const imgs = [];
+  for (const f of list) {
+    const img = await loadImage(f);
+    if (!img) { errFrame.textContent = t().badFile(f.name); return; }
+    imgs.push(img);
+  }
+  frameSources = imgs;
   frameBody.hidden = false;
   renderFrame();
 }
 
-/** 選んだ端末の寸法に「見出し + 端末フレーム + スクショ」を描く。 */
+/** 1 枚目のプレビューと件数表示を更新する。 */
 function renderFrame() {
-  if (!frameSource) return;
+  if (!frameSources.length) return;
+  frameImg.src = drawFrame(frameSources[0]).toDataURL("image/png");
+  const n = frameSources.length;
+  frameCountEl.textContent = n > 1 ? t().frameCount(n) : "";
+  frameDownloadEl.textContent = n > 1 ? t().frameDownloadZip(n) : t().frameDownload;
+}
+
+/** 選んだ端末の寸法に「見出し + 端末フレーム + スクショ」を描く。 */
+function drawFrame(src) {
   const FW = frameDevice.w, FH = frameDevice.h;
   const c = document.createElement("canvas");
   c.width = FW; c.height = FH;
@@ -820,7 +843,6 @@ function renderFrame() {
   ctx.save();
   roundRect(ctx, x, y, screenW, screenH, innerR);
   ctx.clip();
-  const src = frameSource;
   const sAspect = src.naturalWidth / src.naturalHeight;
   const drawW = Math.max(screenW, screenH * sAspect);
   const drawH = drawW / sAspect;
@@ -842,11 +864,8 @@ function renderFrame() {
     ctx.fill();
   }
 
-  frameImg.src = c.toDataURL("image/png");
-  frameDownloadCanvas = c;
+  return c;
 }
-
-let frameDownloadCanvas = null;
 
 function wrapText(ctx, text, maxWidth, fontSize) {
   ctx.font = `bold ${fontSize}px -apple-system, "SF Pro Display", Arial, sans-serif`;
@@ -888,15 +907,27 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-document.getElementById("frameDownload").addEventListener("click", () => {
-  if (!frameDownloadCanvas) return;
-  frameDownloadCanvas.toBlob(blob => {
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `framed-${frameDevice.w}x${frameDevice.h}.png`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-  }, "image/png");
+function saveBlob(blob, name) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+
+frameDownloadEl.addEventListener("click", async () => {
+  if (!frameSources.length) return;
+  const tag = `${frameDevice.w}x${frameDevice.h}`;
+  const blobs = await Promise.all(
+    frameSources.map(img => new Promise(res => drawFrame(img).toBlob(res, "image/png")))
+  );
+  if (blobs.length === 1) { saveBlob(blobs[0], `framed-${tag}.png`); return; }
+
+  const files = await Promise.all(blobs.map(async (b, i) => ({
+    name: `framed-${String(i + 1).padStart(2, "0")}-${tag}.png`,
+    bytes: new Uint8Array(await b.arrayBuffer())
+  })));
+  saveBlob(new Blob([makeZip(files)], { type: "application/zip" }), `framed-${tag}.zip`);
 });
 
 // 動作確認用
