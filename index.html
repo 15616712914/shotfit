@@ -752,26 +752,58 @@ function renderFrame() {
   let screenH = screenW / devAspect;
   if (screenH > availH) { screenH = availH; screenW = screenH * devAspect; }
 
-  const bezel = withPhone ? frameDevice.bezel : 0;
-  const radius = withPhone ? frameDevice.radius : Math.round(FW * 0.03);
+  // 端末フレーム（金属の縁 + 側面ボタン + 大きめの角丸）
+  const bezel = withPhone ? Math.round(screenW * 0.034) : 0;
+  const outerR = withPhone ? Math.round(screenW * 0.115) : Math.round(screenW * 0.03);
+  const innerR = withPhone ? Math.max(outerR - bezel, Math.round(screenW * 0.07)) : outerR;
   const x = (FW - screenW) / 2;
   const y = top + (availH - screenH) / 2;
 
   if (withPhone) {
-    roundRect(ctx, x - bezel, y - bezel, screenW + bezel * 2, screenH + bezel * 2, radius);
-    ctx.fillStyle = "rgba(0,0,0,0.55)";
-    ctx.shadowColor = "rgba(0,0,0,0.45)";
-    ctx.shadowBlur = 60;
-    ctx.shadowOffsetY = 28;
+    const sideW = Math.max(3, Math.round(screenW * 0.008));
+    const metal = "#2a2a30";
+
+    // 側面ボタン（フレームの外に少し出る）
+    const btn = (bx, by, bh, bw) => {
+      roundRect(ctx, bx, by, bw, bh, bw / 2);
+      ctx.fillStyle = metal;
+      ctx.fill();
+    };
+    const h = screenH;
+    const rightX = x + screenW + bezel - sideW * 0.2;
+    btn(rightX, y + h * 0.22, h * 0.10, sideW * 1.6);          // 電源
+    const leftX = x - bezel - sideW * 0.6;
+    btn(leftX, y + h * 0.16, h * 0.055, sideW * 1.6);          // 消音
+    btn(leftX, y + h * 0.26, h * 0.085, sideW * 1.6);          // 音量+
+    btn(leftX, y + h * 0.37, h * 0.085, sideW * 1.6);          // 音量-
+
+    // 筐体
+    roundRect(ctx, x - bezel, y - bezel, screenW + bezel * 2, screenH + bezel * 2, outerR);
+    ctx.shadowColor = "rgba(0,0,0,0.55)";
+    ctx.shadowBlur = 70;
+    ctx.shadowOffsetY = 30;
+    const shell = ctx.createLinearGradient(x - bezel, y, x + screenW + bezel, y + screenH);
+    shell.addColorStop(0, "#3b3b42");
+    shell.addColorStop(0.5, "#1a1a1e");
+    shell.addColorStop(1, "#303036");
+    ctx.fillStyle = shell;
     ctx.fill();
     ctx.shadowColor = "transparent";
     ctx.shadowBlur = 0;
     ctx.shadowOffsetY = 0;
+
+    // 縁のハイライト
+    ctx.save();
+    roundRect(ctx, x - bezel + 1, y - bezel + 1, screenW + bezel * 2 - 2, screenH + bezel * 2 - 2, outerR - 1);
+    ctx.strokeStyle = "rgba(255,255,255,0.22)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.restore();
   }
 
-  // スクショを画面領域いっぱいに（上寄せで）敷く
+  // 画面（スクショは上寄せで敷く）
   ctx.save();
-  roundRect(ctx, x, y, screenW, screenH, withPhone ? radius - bezel : radius);
+  roundRect(ctx, x, y, screenW, screenH, innerR);
   ctx.clip();
   const src = frameSource;
   const sAspect = src.naturalWidth / src.naturalHeight;
@@ -780,10 +812,10 @@ function renderFrame() {
   ctx.drawImage(src, x + (screenW - drawW) / 2, y, drawW, drawH);
   ctx.restore();
 
-  // ダイナミックアイランド（iPhone のみ）
+  // ダイナミックアイランド
   if (withPhone && frameDevice.island) {
-    const iw = screenW * 0.26, ih = screenW * 0.075;
-    roundRect(ctx, x + (screenW - iw) / 2, y + screenW * 0.022, iw, ih, ih / 2);
+    const iw = screenW * 0.27, ih = screenW * 0.078;
+    roundRect(ctx, x + (screenW - iw) / 2, y + screenW * 0.021, iw, ih, ih / 2);
     ctx.fillStyle = "#000";
     ctx.fill();
   }
